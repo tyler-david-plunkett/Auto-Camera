@@ -1,0 +1,6 @@
+## Interface: 80200
+## Title: Dynamic Zoom
+## Author: Tyler Plunkett
+## Version: 0.0.1
+
+main.lua
