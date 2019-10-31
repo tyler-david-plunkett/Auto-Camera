@@ -1,10 +1,13 @@
 ConsoleExec("scriptErrors 1")
+ConsoleExec("cameraZoomSpeed 20")
 print("Dynamic Zoom Init Start")
 local addonName, addon = ...
 local DynamicZoom = addon
 local AUTO_ZOOM_ENABLED = true
 local DEBUG = false
-local distanceIndexedCameraZoom = {4.5, 8.5, 28.5}
+
+local boundries = {}
+-- local distanceIndexedCameraZoom = {4.5, 8.5, 28.5}
 local prevDistancePartition
 
 do
@@ -92,6 +95,15 @@ do
 		
 		return 3
 	end
+
+	function getMaxDistance(unit)
+		for index, boundry in pairs(boundries) do
+			-- print(boundry.spellName, boundry.range, unit, IsSpellInRange(boundry.spellName, unit))
+			if (IsSpellInRange(boundry.spellName, unit) == 1) then
+				return boundry.range
+			end
+		end
+	end
 	
 	function tablelength(T)
 		local count = 0
@@ -101,23 +113,28 @@ do
 
 	function autoZoom()
 		local currentCameraZoom = GetCameraZoom()
-		local distancePartition
+		local spellDistance
 		if UnitExists("target") then
-			distancePartition = getDistancePartition("target")
-		else
-			distancePartition = 1
+			spellDistance = getMaxDistance("target")
+			-- print(spellDistance)
+		end
+
+		if (spellDistance == nil or spellDistance < 4.5) then
+			spellDistance = 4.5
 		end
 		
-		local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
+		-- local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
+		local distanceDiff = spellDistance - currentCameraZoom
 		
-		-- print(distanceDiff)
-		if (prevDistancePartition ~= distancePartition and abs(distanceDiff) > 0.2) then
+		-- -- print(distanceDiff)
+		if (prevSpellDistance ~= spellDistance and abs(distanceDiff) > 0.2) then
 			if (distanceDiff >= 0) then
 				CameraZoomOut(distanceDiff)
 			else
 				CameraZoomIn(distanceDiff * -1)
 			end
 		end
+		prevSpellDistance = spellDistance
 	end
 	
 	-- remove
@@ -162,21 +179,14 @@ do
 	end
 end
 
--- local ticker = C_Timer.NewTicker(DEBUG and 1 or 0.1, autoZoom)
--- local ticker = C_Timer.NewTicker(DEBUG and 1 or 2, printNameplatePositions)
--- autoZoom()
--- print("OnUpdate")
-
 -- SlashCmdList["/autoZoom"] = function()
 	-- AUTO_ZOOM_ENABLED = !AUTO_ZOOM_ENABLED
 	-- if (AUTO_ZOOM_ENABLED)
 		-- autoZoom()
 -- end
-
-local boundries = {}
 local i = 1
 for spellId, spellName in playerSpells() do
-	local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(spellName)
+	local name, _, _, _, minRange, maxRange, _ = GetSpellInfo(spellName)
 	
 	if (minRange ~= 0 and minRange ~= nil) then
 		local boundry = {}
@@ -201,9 +211,14 @@ end
 
 table.sort(boundries, function (a, b) return a.range < b.range end)
 
-for index, boundry in pairs(boundries) do
-	print(boundry.range)
-end
+-- for index, boundry in pairs(boundries) do
+-- 	print(boundry.range)
+-- end
+
+local ticker = C_Timer.NewTicker(DEBUG and 1 or 0.1, autoZoom)
+-- local ticker = C_Timer.NewTicker(DEBUG and 1 or 2, printNameplatePositions)
+-- autoZoom()
+-- print("OnUpdate")
 
 -- /run a, b, c = WorldFrame:GetChildren()
 -- /run ufc1, ufc2, ufc3, ufc4, ufc5, ufc6 = child3.UnitFrame:GetChildren()
