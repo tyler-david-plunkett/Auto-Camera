@@ -3,4 +3,7 @@
 ## Author: Tyler Plunkett
 ## Version: 0.0.1
 
+modules\spells.lua
+modules\getForm.lua
+
 main.lua

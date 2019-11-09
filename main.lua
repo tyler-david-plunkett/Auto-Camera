@@ -1,5 +1,5 @@
 ConsoleExec("scriptErrors 1")
-ConsoleExec("cameraZoomSpeed 20")
+ConsoleExec("cameraZoomSpeed 10")
 print("Dynamic Zoom Init Start")
 local addonName, addon = ...
 local DynamicZoom = addon
@@ -10,173 +10,106 @@ local boundries = {}
 -- local distanceIndexedCameraZoom = {4.5, 8.5, 28.5}
 local prevDistancePartition
 
-do
-	do
-	
-	  -- https://us.battle.net/forums/en/wow/topic/6551965395
-	  function iterateFlyout (state)
-		while state.flyoutSlotIdx <= state.numFlyoutSlots do
-		  local spellId, _, spellKnown, spellName = GetFlyoutSlotInfo(state.flyoutId, state.flyoutSlotIdx)
-		  state.flyoutSlotIdx = state.flyoutSlotIdx + 1
-		  if spellKnown then
-			return spellId, spellName
-		  end
+function tableLength(T)
+	local count = 0
+	for _ in pairs(T) do count = count + 1 end
+	return count
+end
+
+function getInteractDistance(unit)
+	if (CheckInteractDistance("target", 3)) then
+		return 9.9
+	elseif (CheckInteractDistance("target", 2)) then
+		return 11.11
+	elseif (CheckInteractDistance("target", 1)) then
+		return 28
+	end
+end
+
+function getMaxDistance(unit)
+	for index, boundry in pairs(boundries) do
+		if (IsSpellInRange(boundry.spellName, unit) == 1) then
+			return boundry.range
 		end
-		state.slotIdx = state.slotIdx + 1
-		state.currentIterator = iterateSlots
-		return state:currentIterator()
-	  end
-	
-	  -- https://us.battle.net/forums/en/wow/topic/6551965395
-	  function iterateSlots (state)
-		while state.slotIdx <= state.numSlots do
-		  local spellBookItem = state.slotOffset + state.slotIdx
-		  local spellName, spellSubtext = GetSpellBookItemName(spellBookItem, BOOKTYPE_SPELL)
-		  local spellType, spellId = GetSpellBookItemInfo(spellBookItem, BOOKTYPE_SPELL)
-		  if spellType == "SPELL" and not IsPassiveSpell(spellId) then
-			state.slotIdx = state.slotIdx + 1
-			return spellId, spellName, spellSubtext
-		  elseif spellType == "FLYOUT" then
-			local _, _, numFlyoutSlots, flyoutKnown = GetFlyoutInfo(spellId)
-			if flyoutKnown then
-			  state.flyoutId = spellId
-			  state.flyoutSlotIdx = 1
-			  state.numFlyoutSlots = numFlyoutSlots
-			  state.currentIterator = iterateFlyout
-			  return state:currentIterator()
-			end
-		  end
-		  state.slotIdx = state.slotIdx + 1
-		end
-		state.tabIdx = state.tabIdx + 1
-		state.currentIterator = iterateTabs
-		return state:currentIterator()
-	  end
-	  
-	  -- https://us.battle.net/forums/en/wow/topic/6551965395
-	  function iterateTabs (state)
-		while state.tabIdx <= state.numOfTabs do
-		  local _, _, slotOffset, numSlots, _, offSpecID = GetSpellTabInfo(state.tabIdx)
-		  if offSpecID ~= 0 then
-			state.tabIdx = state.tabIdx + 1
-		  else
-			state.slotOffset = slotOffset
-			state.numSlots = numSlots
-			state.slotIdx = 1
-			state.currentIterator = iterateSlots
-			return state:currentIterator()
-		  end
-		end
-		return nil
-	  end
-	  
-	  -- https://us.battle.net/forums/en/wow/topic/6551965395
-	  function dispatch(state)
-		return state:currentIterator()
-	  end
-	
-	  -- https://us.battle.net/forums/en/wow/topic/6551965395
-	  function playerSpells()
-		local state = {}
-		state.tabIdx = 1
-		state.numOfTabs = GetNumSpellTabs()
-		state.currentIterator = iterateTabs
-		return dispatch, state
-	  end
-	
 	end
 
-	function getDistancePartition(unit)
-		if (CheckInteractDistance("target", 5)) then
-			return 1
-		elseif (CheckInteractDistance("target", 4)) then
-			return 2
-		end
-		
-		return 3
+	return 100
+end
+
+function autoZoom()
+	local currentCameraZoom = GetCameraZoom()
+	local spellDistance
+	if UnitExists("target") and UnitIsDead("target") == false and UnitCanAttack("player", "target") then
+		spellDistance = getMaxDistance("target")
+		interactDistance = getInteractDistance("target") -- 1,4 <10; 2,3,5 >10 (not useful if the spec has a range 10 spell)
+		-- print(interactDistance)
 	end
 
-	function getMaxDistance(unit)
-		for index, boundry in pairs(boundries) do
-			-- print(boundry.spellName, boundry.range, unit, IsSpellInRange(boundry.spellName, unit))
-			if (IsSpellInRange(boundry.spellName, unit) == 1) then
-				return boundry.range
-			end
-		end
-	end
-	
-	function tablelength(T)
-		local count = 0
-		for _ in pairs(T) do count = count + 1 end
-		return count
-	end
-
-	function autoZoom()
-		local currentCameraZoom = GetCameraZoom()
-		local spellDistance
-		if UnitExists("target") then
-			spellDistance = getMaxDistance("target")
-			-- print(spellDistance)
-		end
-
-		if (spellDistance == nil or spellDistance < 4.5) then
-			spellDistance = 4.5
-		end
-		
-		-- local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
-		local distanceDiff = spellDistance - currentCameraZoom
-		
-		-- -- print(distanceDiff)
-		if (prevSpellDistance ~= spellDistance and abs(distanceDiff) > 0.2) then
-			if (distanceDiff >= 0) then
-				CameraZoomOut(distanceDiff)
+	if (spellDistance == nil or spellDistance < 4.5) then
+		if (IsMounted("player") and AuraUtil.FindAuraByName("Running Wild", "player") == nil) then
+			spellDistance = 8.5
+		else
+			if (isWorgenForm()) then
+				spellDistance = 4.5
 			else
-				CameraZoomIn(distanceDiff * -1)
-			end
-		end
-		prevSpellDistance = spellDistance
-	end
-	
-	-- remove
-	function printNameplatePositions()
-		print ("printNameplatePositions")
-		for i, frame in pairs({WorldFrame:GetChildren()}) do
-			local name = frame:GetName()
-			if name and strmatch(name, "NamePlate") then
-				-- unitFrame = frame.UnitFrame
-				print(frame:GetPoint())
-				-- print()
-				-- point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
-				-- print(point, relativeTo, relativePoint, xOfs, yOfs)
-				local unitFrame = frame:GetChildren()
-				local unit = unitFrame and unitFrame:GetAttribute("unit")
-				if unitFrame and unit then
-					-- print (unit)
-				end
+				spellDistance = 3.5
 			end
 		end
 	end
 	
-	-- event handlers
-	local CoreEvents = {}
+	-- local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
+	local distanceDiff = spellDistance - currentCameraZoom
 	
-	local function EventHandler(self, event, ...)
-		CoreEvents[event](event, ...)
+	-- todo fix over-zoom bug
+	if (prevSpellDistance ~= spellDistance and abs(distanceDiff) > 0.2) then
+		if (distanceDiff >= 0) then
+			CameraZoomOut(distanceDiff)
+		else
+			CameraZoomIn(distanceDiff * -1)
+		end
 	end
-	
-	function CoreEvents:NAME_PLATE_UNIT_ADDED(...)
-		-- print("name plate unit added")
-		-- local unitid = ...
-		-- local plate = C_NamePlate.GetNamePlateForUnit(unitid);
+	prevSpellDistance = spellDistance
+end
 
-		-- -- We're not going to theme the personal unit bar
-		-- -- if plate and not UnitIsUnit("player", unitid) then
-			-- local childFrame = plate:GetChildren()
-			-- if childFrame then print(childFrame:GetTop()) end
-			-- -- OnShowNameplate(plate, unitid)
-		-- -- end
-
+-- remove
+function printNameplatePositions()
+	print ("printNameplatePositions")
+	for i, frame in pairs({WorldFrame:GetChildren()}) do
+		local name = frame:GetName()
+		if name and strmatch(name, "NamePlate") then
+			-- unitFrame = frame.UnitFrame
+			print(frame:GetPoint())
+			-- print()
+			-- point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
+			-- print(point, relativeTo, relativePoint, xOfs, yOfs)
+			local unitFrame = frame:GetChildren()
+			local unit = unitFrame and unitFrame:GetAttribute("unit")
+			if unitFrame and unit then
+				-- print (unit)
+			end
+		end
 	end
+end
+
+-- event handlers
+local CoreEvents = {}
+
+local function EventHandler(self, event, ...)
+	CoreEvents[event](event, ...)
+end
+
+function CoreEvents:NAME_PLATE_UNIT_ADDED(...)
+	-- print("name plate unit added")
+	-- local unitid = ...
+	-- local plate = C_NamePlate.GetNamePlateForUnit(unitid);
+
+	-- -- We're not going to theme the personal unit bar
+	-- -- if plate and not UnitIsUnit("player", unitid) then
+		-- local childFrame = plate:GetChildren()
+		-- if childFrame then print(childFrame:GetTop()) end
+		-- -- OnShowNameplate(plate, unitid)
+	-- -- end
+
 end
 
 -- SlashCmdList["/autoZoom"] = function()
@@ -197,7 +130,7 @@ for spellId, spellName in playerSpells() do
 		i = i + 1
 	end
 
-	if (maxRange ~= 0 and maxRange ~= nil) then
+	if (maxRange ~= nil) then
 		local boundry = {}
 		boundry.range = maxRange
 		boundry.type = "max"
