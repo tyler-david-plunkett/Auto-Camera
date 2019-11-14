@@ -1,14 +1,11 @@
-ConsoleExec("scriptErrors 1")
-ConsoleExec("cameraZoomSpeed 10")
-print("Dynamic Zoom Init Start")
+-- todo define zoom event behavior
+ConsoleExec("scriptErrors 1") -- todo remove
+ConsoleExec("cameraZoomSpeed 50")
 local addonName, addon = ...
 local DynamicZoom = addon
 local AUTO_ZOOM_ENABLED = true
-local DEBUG = false
 
 local boundries = {}
--- local distanceIndexedCameraZoom = {4.5, 8.5, 28.5}
-local prevDistancePartition
 
 function tableLength(T)
 	local count = 0
@@ -33,47 +30,63 @@ function getMaxDistance(unit)
 		end
 	end
 
-	return 100
+	return 0
 end
 
 function autoZoom()
+	local targetZoom = 0
 	local currentCameraZoom = GetCameraZoom()
 	local spellDistance
-	if UnitExists("target") and UnitIsDead("target") == false and UnitCanAttack("player", "target") then
-		spellDistance = getMaxDistance("target")
-		interactDistance = getInteractDistance("target") -- 1,4 <10; 2,3,5 >10 (not useful if the spec has a range 10 spell)
-		-- print(interactDistance)
-	end
+	local interactDistance
+	local unit
 
-	if (spellDistance == nil or spellDistance < 4.5) then
+	for i = 1, 40 do -- todo are nameplates dynamically in order?
+		unit = 'nameplate' .. i
+
+		-- if UnitExists(unit) ~= true then break end
+
+		if UnitIsDead(unit) == false and UnitCanAttack("player", unit) then
+			spellDistance = getMaxDistance(unit)
+			interactDistance = getInteractDistance(unit) -- [1,4] < 10; [2, 3, 5] > 10 (not useful if the spec has a range 10 spell)
+
+			-- todo stealth limits IsSpellInRange
+			if spellDistance ~= nil and targetZoom < spellDistance then targetZoom = spellDistance end
+			-- if interactDistance ~= nil and targetZoom < interactDistance then targetZoom = interactDistance end
+		end
+	end
+	
+	if (targetZoom < 4.5) then
 		if (IsMounted("player") and AuraUtil.FindAuraByName("Running Wild", "player") == nil) then
-			spellDistance = 8.5
+			targetZoom = 8.5
 		else
 			if (isWorgenForm()) then
-				spellDistance = 4.5
+				targetZoom = 4.5
 			else
-				spellDistance = 3.5
+				targetZoom = 3.5
 			end
 		end
 	end
 	
 	-- local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
-	local distanceDiff = spellDistance - currentCameraZoom
+	local distanceDiff = targetZoom - currentCameraZoom
 	
 	-- todo fix over-zoom bug
-	if (prevSpellDistance ~= spellDistance and abs(distanceDiff) > 0.2) then
+	if (abs(distanceDiff) > 0.05) then
 		if (distanceDiff >= 0) then
-			CameraZoomOut(distanceDiff)
+			MoveViewInStop()
+			MoveViewOutStart()
 		else
-			CameraZoomIn(distanceDiff * -1)
+			MoveViewOutStop()
+			MoveViewInStart()
 		end
+	else
+		MoveViewInStop()
+		MoveViewOutStop()
 	end
-	prevSpellDistance = spellDistance
 end
 
 -- remove
 function printNameplatePositions()
-	print ("printNameplatePositions")
 	for i, frame in pairs({WorldFrame:GetChildren()}) do
 		local name = frame:GetName()
 		if name and strmatch(name, "NamePlate") then
@@ -148,8 +161,8 @@ table.sort(boundries, function (a, b) return a.range < b.range end)
 -- 	print(boundry.range)
 -- end
 
-local ticker = C_Timer.NewTicker(DEBUG and 1 or 0.1, autoZoom)
--- local ticker = C_Timer.NewTicker(DEBUG and 1 or 2, printNameplatePositions)
+local ticker = C_Timer.NewTicker(0.01, autoZoom)
+-- local ticker = C_Timer.NewTicker(2, printNameplatePositions)
 -- autoZoom()
 -- print("OnUpdate")
 
@@ -157,8 +170,6 @@ local ticker = C_Timer.NewTicker(DEBUG and 1 or 0.1, autoZoom)
 -- /run ufc1, ufc2, ufc3, ufc4, ufc5, ufc6 = child3.UnitFrame:GetChildren()
 -- /run print(ufc1)
 -- /run point, relativeTo, relativePoint, xOfs, yOfs = WorldFrame:GetPoint()
-
-print("Dynamic Zoom Init End")
 
 -- close
 -- 5
