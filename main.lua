@@ -23,7 +23,7 @@ function getInteractDistance(unit)
 	end
 end
 
-function getMaxDistance(unit)
+function getSpellDistance(unit)
 	for index, boundry in pairs(boundries) do
 		if (IsSpellInRange(boundry.spellName, unit) == 1) then
 			return boundry.range
@@ -33,26 +33,42 @@ function getMaxDistance(unit)
 	return 0
 end
 
+function getDistance(unit)
+	if UnitIsDead(unit) == true or UnitCanAttack("player", unit) == false then return nil end
+
+	spellDistance = getSpellDistance(unit)
+	interactDistance = getInteractDistance(unit) -- [1,4] < 10; [2, 3, 5] > 10 (not useful if the spec has a range 10 spell)
+
+	-- todo stealth limits IsSpellInRange
+	if spellDistance == nil and interactDistance ~= nil then
+		return interactDistance
+	elseif spellDistance ~=nil and interactDistance == nil then
+		return interactDistance
+	else
+		if spellDistance < interactDistance then
+			return spellDistance
+		else
+			return interactDistance
+		end
+	end
+end
+
 function autoZoom()
 	local targetZoom = 0
 	local currentCameraZoom = GetCameraZoom()
 	local spellDistance
 	local interactDistance
 	local unit
+	local distance
 
-	for i = 1, 40 do -- todo are nameplates dynamically in order?
+	distance = getDistance("target")
+	if distance ~= nil then targetZoom = distance end
+
+	for i = 1, 20 do -- todo better way to do this (nameplates not garunteed to be well-ordered)?
 		unit = 'nameplate' .. i
 
-		-- if UnitExists(unit) ~= true then break end
-
-		if UnitIsDead(unit) == false and UnitCanAttack("player", unit) then
-			spellDistance = getMaxDistance(unit)
-			interactDistance = getInteractDistance(unit) -- [1,4] < 10; [2, 3, 5] > 10 (not useful if the spec has a range 10 spell)
-
-			-- todo stealth limits IsSpellInRange
-			if spellDistance ~= nil and targetZoom < spellDistance then targetZoom = spellDistance end
-			-- if interactDistance ~= nil and targetZoom < interactDistance then targetZoom = interactDistance end
-		end
+		distance = getDistance(unit)
+			if  distance ~= nil and targetZoom < distance then targetZoom = distance end
 	end
 	
 	if (targetZoom < 4.5) then
@@ -71,7 +87,7 @@ function autoZoom()
 	local distanceDiff = targetZoom - currentCameraZoom
 	
 	-- todo fix over-zoom bug
-	if (abs(distanceDiff) > 0.05) then
+	if (abs(distanceDiff) > 0.1) then
 		if (distanceDiff >= 0) then
 			MoveViewInStop()
 			MoveViewOutStart()
