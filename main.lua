@@ -1,9 +1,9 @@
 -- todo define zoom event behavior
-ConsoleExec("scriptErrors 1") -- todo remove
+ConsoleExec("scriptErrors 0") -- todo remove
 ConsoleExec("cameraZoomSpeed 50")
 local addonName, addon = ...
 local DynamicZoom = addon
-local AUTO_ZOOM_ENABLED = true
+local AUTO_ZOOM_ENABLED = false
 
 local boundries = {}
 
@@ -36,20 +36,14 @@ end
 function getDistance(unit)
 	if UnitIsDead(unit) == true or UnitCanAttack("player", unit) == false then return nil end
 
-	spellDistance = getSpellDistance(unit)
-	interactDistance = getInteractDistance(unit) -- [1,4] < 10; [2, 3, 5] > 10 (not useful if the spec has a range 10 spell)
+	spellDistance = getSpellDistance(unit) or 0
+	interactDistance = getInteractDistance(unit) or 0 -- [1,4] < 10; [2, 3, 5] > 10 (not useful if the spec has a range 10 spell)
 
 	-- todo stealth limits IsSpellInRange
-	if spellDistance == nil and interactDistance ~= nil then
-		return interactDistance
-	elseif spellDistance ~=nil and interactDistance == nil then
-		return interactDistance
+	if spellDistance < interactDistance then
+		return spellDistance
 	else
-		if spellDistance < interactDistance then
-			return spellDistance
-		else
-			return interactDistance
-		end
+		return interactDistance
 	end
 end
 
@@ -64,19 +58,19 @@ function autoZoom()
 	distance = getDistance("target")
 	if distance ~= nil then targetZoom = distance end
 
-	for i = 1, 20 do -- todo better way to do this (nameplates not garunteed to be well-ordered)?
-		unit = 'nameplate' .. i
+	-- for i = 1, 10 do -- todo better way to do this (nameplates not garunteed to be well-ordered)?
+	-- 	unit = 'nameplate' .. i
 
-		distance = getDistance(unit)
-			if  distance ~= nil and targetZoom < distance then targetZoom = distance end
-	end
+	-- 	distance = getDistance(unit)
+	-- 		if  distance ~= nil and targetZoom < distance then targetZoom = distance end
+	-- end
 	
-	if (targetZoom < 4.5) then
+	if (targetZoom < 4.6) then
 		if (IsMounted("player") and AuraUtil.FindAuraByName("Running Wild", "player") == nil) then
 			targetZoom = 8.5
 		else
 			if (isWorgenForm()) then
-				targetZoom = 4.5
+				targetZoom = 4.6
 			else
 				targetZoom = 3.5
 			end
@@ -98,6 +92,10 @@ function autoZoom()
 	else
 		MoveViewInStop()
 		MoveViewOutStop()
+	end
+
+	if (AUTO_ZOOM_ENABLED) then
+		C_Timer.After(0.01, autoZoom)
 	end
 end
 
@@ -141,11 +139,16 @@ function CoreEvents:NAME_PLATE_UNIT_ADDED(...)
 
 end
 
--- SlashCmdList["/autoZoom"] = function()
-	-- AUTO_ZOOM_ENABLED = !AUTO_ZOOM_ENABLED
-	-- if (AUTO_ZOOM_ENABLED)
-		-- autoZoom()
--- end
+SLASH_DZ1 = "/dz"
+SlashCmdList["DZ"] = function(msg)
+	if (AUTO_ZOOM_ENABLED) then
+		AUTO_ZOOM_ENABLED = false
+	else
+		AUTO_ZOOM_ENABLED = true
+		autoZoom()
+	end
+end
+
 local i = 1
 for spellId, spellName in playerSpells() do
 	local name, _, _, _, minRange, maxRange, _ = GetSpellInfo(spellName)
@@ -177,7 +180,9 @@ table.sort(boundries, function (a, b) return a.range < b.range end)
 -- 	print(boundry.range)
 -- end
 
-local ticker = C_Timer.NewTicker(0.01, autoZoom)
+if (AUTO_ZOOM_ENABLED) then
+	autoZoom()
+end
 -- local ticker = C_Timer.NewTicker(2, printNameplatePositions)
 -- autoZoom()
 -- print("OnUpdate")
@@ -196,10 +201,8 @@ local ticker = C_Timer.NewTicker(0.01, autoZoom)
 -- UPDATE_SHAPESHIFT_FORM
 
 -- functions
--- CameraZoomOut(40) -- 28 total
--- GetCameraZoom()
 -- UnitExists("target")
 
 -- distances
 -- human 3.5
--- worgen 4.5
+-- worgen 4.6
