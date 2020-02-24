@@ -4,6 +4,12 @@ local DynamicZoom = addon
 local AUTO_ZOOM_ENABLED = true
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.01 -- deltaTime
+local units = {}
+
+units[1] = 'target'
+-- for i = 2, 10 do
+-- 	units[i] = 'nameplate' .. i
+-- end
 
 local boundries = {}
 
@@ -51,7 +57,6 @@ function autoZoom()
 	local targetZoom
 	local currentCameraZoom = GetCameraZoom()
 	local unit
-	local units = {}
 	local enemyCount = 0
 
 	if (isWorgenForm()) then
@@ -64,31 +69,34 @@ function autoZoom()
 		targetZoom = 8.5
 	end
 
-	units[0] = 'target'
-	for i = 1, 10 do
-		units[i] = 'nameplate' .. i
-	end
-
 	for i, unit in ipairs(units) do
-		if (UnitIsDead(unit) == true or UnitCanAttack("player", unit) == false) then
-			if (UnitClassification(unit) == "worldboss") then targetZoom = targetZoom + 100 end
+		local unitClassification = UnitClassification(unit)
+		local unitLevel = UnitLevel(unit)
+		if (UnitIsDead(unit) == false and UnitCanAttack("player", unit) == true) then
+			if (
+				unitClassification == "worldboss" or 
+				(unitClassification == "elite" and UnitLevel(unit) == -1)
+			) then targetZoom = 50 end
 		end
 	end
-	
+
 	-- local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
 	local distanceDiff = targetZoom - currentCameraZoom
 	
-	MoveViewInStop()
-	MoveViewOutStop()
 	-- todo fix over-zoom bug
 	if (abs(distanceDiff) > 0.1) then
 		local cameraZoomSpeed = distanceDiff / tonumber(GetCVar("cameraZoomSpeed"))
 		if (cameraZoomSpeed < 0) then cameraZoomSpeed = cameraZoomSpeed * -1 end
 		if (distanceDiff > 0) then
+			MoveViewInStop()
 			MoveViewOutStart(cameraZoomSpeed)
 		else
+			MoveViewOutStop()
 			MoveViewInStart(cameraZoomSpeed)
 		end
+	else
+		MoveViewInStop()
+		MoveViewOutStop()
 	end
 
 	if (AUTO_ZOOM_ENABLED) then
