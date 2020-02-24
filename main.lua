@@ -1,9 +1,9 @@
 -- todo define zoom event behavior
-ConsoleExec("scriptErrors 0") -- todo remove
-ConsoleExec("cameraZoomSpeed 50")
 local addonName, addon = ...
 local DynamicZoom = addon
-local AUTO_ZOOM_ENABLED = false
+local AUTO_ZOOM_ENABLED = true
+local previousCameraZoom = GetCameraZoom()
+local deltaTime = 0.01 -- deltaTime
 
 local boundries = {}
 
@@ -48,55 +48,57 @@ function getDistance(unit)
 end
 
 function autoZoom()
-	local targetZoom = 0
+	local targetZoom
 	local currentCameraZoom = GetCameraZoom()
-	local spellDistance
-	local interactDistance
 	local unit
-	local distance
+	local units = {}
+	local enemyCount = 0
 
-	distance = getDistance("target")
-	if distance ~= nil then targetZoom = distance end
-
-	-- for i = 1, 10 do -- todo better way to do this (nameplates not garunteed to be well-ordered)?
-	-- 	unit = 'nameplate' .. i
-
-	-- 	distance = getDistance(unit)
-	-- 		if  distance ~= nil and targetZoom < distance then targetZoom = distance end
-	-- end
+	if (isWorgenForm()) then
+		targetZoom = 4.6
+	else
+		targetZoom = 3.5
+	end
 	
-	if (targetZoom < 4.6) then
-		if (IsMounted("player") and AuraUtil.FindAuraByName("Running Wild", "player") == nil) then
-			targetZoom = 8.5
-		else
-			if (isWorgenForm()) then
-				targetZoom = 4.6
-			else
-				targetZoom = 3.5
-			end
+	if (IsMounted("player") and AuraUtil.FindAuraByName("Running Wild", "player") == nil) then
+		targetZoom = 8.5
+	end
+
+	units[0] = 'target'
+	for i = 1, 10 do
+		units[i] = 'nameplate' .. i
+	end
+
+	for i, unit in ipairs(units) do
+		if (UnitIsDead(unit) == true or UnitCanAttack("player", unit) == false) then
+			if (UnitClassification(unit) == "worldboss") then targetZoom = targetZoom + 100 end
 		end
 	end
 	
 	-- local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
 	local distanceDiff = targetZoom - currentCameraZoom
 	
+	MoveViewInStop()
+	MoveViewOutStop()
 	-- todo fix over-zoom bug
 	if (abs(distanceDiff) > 0.1) then
-		if (distanceDiff >= 0) then
-			MoveViewInStop()
-			MoveViewOutStart()
+		local cameraZoomSpeed = distanceDiff / tonumber(GetCVar("cameraZoomSpeed"))
+		if (cameraZoomSpeed < 0) then cameraZoomSpeed = cameraZoomSpeed * -1 end
+		if (distanceDiff > 0) then
+			MoveViewOutStart(cameraZoomSpeed)
 		else
-			MoveViewOutStop()
-			MoveViewInStart()
+			MoveViewInStart(cameraZoomSpeed)
 		end
+	end
+
+	if (AUTO_ZOOM_ENABLED) then
+		C_Timer.After(deltaTime, autoZoom)
 	else
 		MoveViewInStop()
 		MoveViewOutStop()
 	end
 
-	if (AUTO_ZOOM_ENABLED) then
-		C_Timer.After(0.01, autoZoom)
-	end
+	previousCameraZoom = currentCameraZoom
 end
 
 -- remove
