@@ -7,9 +7,9 @@ local deltaTime = 0.01 -- deltaTime
 local units = {}
 
 units[1] = 'target'
--- for i = 2, 10 do
--- 	units[i] = 'nameplate' .. i
--- end
+for i = 1, 10 do
+	units[i + 1] = 'nameplate' .. i
+end
 
 local boundries = {}
 
@@ -69,16 +69,26 @@ function autoZoom()
 		targetZoom = 8.5
 	end
 
+	local unitCount = 0
 	for i, unit in ipairs(units) do
 		local unitClassification = UnitClassification(unit)
 		local unitLevel = UnitLevel(unit)
 		if (UnitIsDead(unit) == false and UnitCanAttack("player", unit) == true) then
+			unitCount = unitCount + 1
 			if (
-				unitClassification == "worldboss" or 
-				(unitClassification == "elite" and UnitLevel(unit) == -1)
-			) then targetZoom = 50 end
+				(unitClassification == "worldboss" or
+				(unitClassification == "elite" and UnitLevel(unit) == -1)) and
+				targetZoom < 50
+			) then targetZoom = 50
+			elseif (
+				unitClassification == "elite" and
+				targetZoom < 8.5
+			) then targetZoom = 8.5 end
 		end
 	end
+
+	local countDistance = unitCount * 4
+	if (targetZoom < countDistance) then targetZoom = countDistance end
 
 	-- local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
 	local distanceDiff = targetZoom - currentCameraZoom
