@@ -6,12 +6,24 @@ local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.01 -- deltaTime
 local units = {}
 
+BINDING_HEADER_DYNAMIC_ZOOM = "Dynamic Zoom"
+BINDING_NAME_TOGGLE_DYNAMIC_ZOOM = "Toggle On/Off"
+
 units[1] = 'target'
 for i = 1, 10 do
 	units[i + 1] = 'nameplate' .. i
 end
 
 local boundries = {}
+ 
+function toggleDynamicZoom()
+	if (AUTO_ZOOM_ENABLED) then
+		AUTO_ZOOM_ENABLED = false
+	else
+		AUTO_ZOOM_ENABLED = true
+		autoZoom()
+	end
+end
 
 function tableLength(T)
 	local count = 0
@@ -161,12 +173,7 @@ end
 
 SLASH_DZ1 = "/dz"
 SlashCmdList["DZ"] = function(msg)
-	if (AUTO_ZOOM_ENABLED) then
-		AUTO_ZOOM_ENABLED = false
-	else
-		AUTO_ZOOM_ENABLED = true
-		autoZoom()
-	end
+	toggleDynamicZoom()
 end
 
 local i = 1

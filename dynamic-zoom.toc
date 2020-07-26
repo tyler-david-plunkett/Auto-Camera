@@ -7,3 +7,4 @@ modules\spells.lua
 modules\getForm.lua
 
 main.lua
+bindings.xml
