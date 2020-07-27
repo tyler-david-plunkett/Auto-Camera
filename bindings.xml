@@ -1,5 +1,5 @@
  <Bindings>
- 	<Binding name="TOGGLE_AUTO-CAMERA" runOnUp="true" header="AUTO-CAMERA" category="ADDONS">
+ 	<Binding name="TOGGLE_AUTO_CAMERA" runOnUp="true" header="AUTO_CAMERA" category="ADDONS">
  		if keystate == "down" then
  			toggleAutoCamera()
  		end
