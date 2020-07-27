@@ -1,5 +1,5 @@
 ## Interface: 80205
-## Title: Dynamic Zoom
+## Title: Auto-Camera
 ## Author: Tyler Plunkett
 ## Version: 0.0.1
 
