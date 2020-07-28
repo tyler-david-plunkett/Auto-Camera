@@ -1,4 +1,4 @@
-## Interface: 80205
+## Interface: 80300
 ## Title: Auto-Camera
 ## Author: Tyler Plunkett
 ## Version: 0.0.1
