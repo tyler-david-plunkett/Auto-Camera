@@ -5,6 +5,7 @@ local AUTO_CAMERA_ENABLED = true
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.01 -- deltaTime
 local units = {}
+local exitView = 1 -- todo> setting
 
 BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
 BINDING_NAME_TOGGLE_AUTO_CAMERA = "Toggle On/Off"
@@ -84,6 +85,7 @@ function autoZoom()
 	else
 		MoveViewInStop()
 		MoveViewOutStop()
+		SetView(exitView)
 	end
 
 	previousCameraZoom = currentCameraZoom
