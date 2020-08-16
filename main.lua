@@ -1,7 +1,7 @@
 -- todo define zoom event behavior
 local addonName, addon = ...
 local AutoCamera = addon
-local AUTO_CAMERA_ENABLED = true
+local AUTO_CAMERA_ENABLED = true -- todo> make this a setting
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.01 -- deltaTime
 local units = {}
@@ -91,7 +91,7 @@ function autoZoom()
 	previousCameraZoom = currentCameraZoom
 end
 
-SLASH_DZ1 = "/ac"
+SLASH_AC1 = "/ac"
 SlashCmdList["AC"] = function(msg)
 	toggleAutoCamera()
 end
