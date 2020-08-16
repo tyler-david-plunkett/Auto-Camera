@@ -91,8 +91,8 @@ function autoZoom()
 	previousCameraZoom = currentCameraZoom
 end
 
-SLASH_DZ1 = "/dz"
-SlashCmdList["DZ"] = function(msg)
+SLASH_DZ1 = "/ac"
+SlashCmdList["AC"] = function(msg)
 	toggleAutoCamera()
 end
 
