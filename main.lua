@@ -3,9 +3,9 @@ local addonName, addon = ...
 local AutoCamera = addon
 local AUTO_CAMERA_ENABLED = true -- todo> make this a setting
 local previousCameraZoom = GetCameraZoom()
-local deltaTime = 0.01 -- deltaTime
+local deltaTime = 0.1 -- deltaTime
 local units = {}
-local exitView = 1 -- todo> setting
+local exitView = 2 -- todo> setting
 
 BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
 BINDING_NAME_TOGGLE_AUTO_CAMERA = "Toggle On/Off"
@@ -44,7 +44,7 @@ function autoZoom()
 	for i, unit in ipairs(units) do
 		local unitClassification = UnitClassification(unit)
 		local unitLevel = UnitLevel(unit)
-		if (UnitIsDead(unit) == false and UnitCanAttack("player", unit) == true) then
+		if (UnitIsDead(unit) == false and UnitCanAttack("player", unit) == true and CheckInteractDistance(unit, 1) and (unit == 'target' or UnitGUID('target') ~= UnitGUID(unit))) then
 			unitCount = unitCount + 1
 			if (
 				(unitClassification == "worldboss" or
@@ -91,6 +91,7 @@ function autoZoom()
 	previousCameraZoom = currentCameraZoom
 end
 
+-- commands
 SLASH_AC1 = "/ac"
 SlashCmdList["AC"] = function(msg)
 	toggleAutoCamera()
