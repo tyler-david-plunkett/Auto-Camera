@@ -44,7 +44,12 @@ function autoZoom()
 	for i, unit in ipairs(units) do
 		local unitClassification = UnitClassification(unit)
 		local unitLevel = UnitLevel(unit)
-		if (UnitIsDead(unit) == false and UnitCanAttack("player", unit) == true and CheckInteractDistance(unit, 1) and (unit == 'target' or UnitGUID('target') ~= UnitGUID(unit))) then
+		if (
+			not UnitIsDead(unit) and
+			UnitCanAttack("player", unit) and
+			CheckInteractDistance(unit, 1) and
+			(unit == 'target' or UnitGUID('target') ~= UnitGUID(unit)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
+		) then
 			unitCount = unitCount + 1
 			if (
 				(unitClassification == "worldboss" or
