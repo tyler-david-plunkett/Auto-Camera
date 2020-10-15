@@ -36,7 +36,10 @@ function autoZoom()
 		targetZoom = 3.5
 	end
 	
-	if (IsMounted("player") and AuraUtil.FindAuraByName("Running Wild", "player") == nil) then
+	if (
+		AuraUtil.FindAuraByName("Running Wild", "player") == nil and
+		(IsMounted("player") or UnitInVehicle("player"))
+	) then
 		targetZoom = 8.5
 	end
 
@@ -74,10 +77,10 @@ function autoZoom()
 		local cameraZoomSpeed = distanceDiff / tonumber(GetCVar("cameraZoomSpeed"))
 		if (cameraZoomSpeed < 0) then cameraZoomSpeed = cameraZoomSpeed * -1 end
 		if (distanceDiff > 0) then
-			MoveViewInStop()
+			MoveViewInStart(0)
 			MoveViewOutStart(cameraZoomSpeed)
 		else
-			MoveViewOutStop()
+			MoveViewOutStart(0)
 			MoveViewInStart(cameraZoomSpeed)
 		end
 	else
