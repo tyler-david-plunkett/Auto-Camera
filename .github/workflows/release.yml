@@ -29,10 +29,16 @@ jobs:
       - uses: JesseTG/rm@v1.0.0
         with:
           path: .vs
+      - uses: JesseTG/rm@v1.0.0
+        with:
+          path: .git
+      - uses: JesseTG/rm@v1.0.0
+        with:
+          path: .github
       
       # Creates artifact
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: dist-without-markdown
+          name: Auto-Camera
           path: .
