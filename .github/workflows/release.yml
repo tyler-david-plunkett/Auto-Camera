@@ -23,7 +23,7 @@ jobs:
         
       # Creates /dist and moves distribution files into it
       - name: Create Distribution
-        run: dist.sh
+        run: ./build.sh
       
       # Creates artifact
       - name: Archive production artifacts
