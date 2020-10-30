@@ -29,5 +29,5 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: Auto-Camera.zip
-          path: .
+          name: Auto-Camera
+          path: Auto-Camera.zip
