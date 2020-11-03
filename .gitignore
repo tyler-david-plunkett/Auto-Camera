@@ -4,5 +4,6 @@
 .vs/dynamic-zoom/v15/.suo
 modules/noDogsAllowed.lua
 modules/spells.lua
+libs/*
 scratch.lua
 Auto-Camera.zip
