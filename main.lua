@@ -2,11 +2,16 @@ local addonName, vars = ...
 ActionCamera = LibStub("AceAddon-3.0"):NewAddon(addonName)
 local addon = ActionCamera
 local AUTO_CAMERA_ENABLED = true -- todo> make this a setting
+local IN_PET_BATTLE = false
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
+local playerRace = UnitRace("player")
+local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Pandaren", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
+races[playerRace] = true -- adds player race if it's missing from race set
 local defaults = {
 	global = {
 		exitView = 1,
+		petBattleView = 1,
 		humanDistance = 3.5,
 		worgenDistance = 4.6,
 		ridingDistance = 8.5,
@@ -24,19 +29,8 @@ end
 BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
 BINDING_NAME_TOGGLE_AUTO_CAMERA = "Toggle On/Off"
 
-local function deepCopy(tree)
-	if not tree then return nil
-	elseif type(tree) == "table" then
-		local branch = {}
-		
-		for key, value in pairs(tree) do
-			branch[key] = deepCopy(value)
-		end
-		
-		return branch
-	else
-		return tree
-	end
+function addon:isRunning() 
+	return AUTO_CAMERA_ENABLED and not IN_PET_BATTLE
 end
 
 function addon:RefreshConfig()
@@ -141,30 +135,28 @@ function autoZoom()
 		MoveViewOutStop()
 	end
 
-	if (AUTO_CAMERA_ENABLED) then
+	if (addon:isRunning()) then
 		C_Timer.After(deltaTime, autoZoom)
 	else
 		MoveViewInStop()
 		MoveViewOutStop()
-		SetView(settings.exitView)
+		if not AUTO_CAMERA_ENABLED then
+			SetView(settings.exitView)
+		elseif IN_PET_BATTLE then
+			SetView(settings.petBattleView)
+		end
 	end
 
 	previousCameraZoom = currentCameraZoom
 end
 
--- option functions
-function addon:GetExitView(info)
-    return settings.exitView
-end
-
-function addon:SetExitView(info, input)
-	print("Exit View = ", input)
-    settings.exitView = input
-end
-
-function merge(target, source)
-	for key, value in pairs(source) do target[key] = value end
-	return target
+function viewOption()
+	return {
+		type = 'range',
+		min = 1,
+		max = 5,
+		step = 1
+	}
 end
 
 function distanceOption()
@@ -172,13 +164,14 @@ function distanceOption()
 		type = 'range',
 		min = 0,
 		max = 50,
-		step = 0.1
+		step = 0.1,
+		order = 3
 	}
 end
 
 -- options
 function addon:options()
-	return {
+	local options = {
 		type = 'group',
 		set = function(info, val) settings[info[#info]] = val end,
 		get = function(info) return settings[info[#info]] end,
@@ -192,14 +185,7 @@ function addon:options()
 						inline = true,
 						order = 1,
 						name = "Standing Distances by Race",
-						args = {
-							humanDistance = merge(distanceOption(), {
-								name = 'Human'
-							}),
-							worgenDistance = merge(distanceOption(), {
-								name = 'Worgen'
-							}),
-						}
+						args = {} -- dynamically populated below
 					},
 					contexturalDistances = {
 						type = "group",
@@ -225,28 +211,73 @@ function addon:options()
 						order = 3,
 						name = "Miscellaneous",
 						args = {
-							exitView = {
+							exitView = merge(viewOption(), {
 								type = 'range',
 								min = 1,
 								max = 5,
 								step = 1,
 								name = 'Exit View',
 								desc = 'The camera view to go to when toggling Auto-Camera off'
-							}
+							}),
+							petBattleView = merge(viewOption(), {
+								type = 'range',
+								min = 1,
+								max = 5,
+								step = 1,
+								name = 'Pet Battle View',
+								desc = 'The camera view to go to during a pet battle.'
+							})
 						}
 					}
 				}
 			}
-		},
+		}
 	}
+
+	local standingDistances = options.args.general.args.standingDistances
+	for race in pairs(races) do
+		standingDistances.args[race:lower() .. 'Distance'] = merge(distanceOption(), {
+			name = race
+		})
+	end
+	standingDistances.args[playerRace:lower() .. 'Distance'].order = 1
+	if (playerRace == "Worgen") then
+		options.args.general.args.standingDistances.args.humanDistance.order = 2
+	end
+	return options
 end
 
 -- commands
+local yellow = "cffffff00"
+local colorStart = "\124"
+local colorEnd = "\124r"
 SLASH_AC1 = "/ac"
-SlashCmdList["AC"] = function(msg)
-	toggleAutoCamera()
+SlashCmdList["AC"] = function(arg)
+	if arg == "toggle" then
+		toggleAutoCamera()
+	else
+		print(colorStart .. yellow .. "Auto-Camera console commands:" .. colorEnd)
+		print("/ac toggle    " .. colorStart .. yellow .. "toggles Auto-Camera on/off" .. colorEnd)
+	end
 end
 
 if (AUTO_CAMERA_ENABLED) then
 	autoZoom()
 end
+
+-- events
+local function OnEvent(self, event, ...)
+	if event == "PET_BATTLE_OPENING_START" then
+		IN_PET_BATTLE = true
+	elseif event == "PET_BATTLE_CLOSE" then
+		IN_PET_BATTLE = false
+		if addon:isRunning() then
+			autoZoom()
+		end
+	end
+end
+
+local f = CreateFrame("Frame")
+f:RegisterEvent("PET_BATTLE_OPENING_START")
+f:RegisterEvent("PET_BATTLE_CLOSE")
+f:SetScript("OnEvent", OnEvent)
