@@ -6,19 +6,44 @@ local IN_PET_BATTLE = false
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
 local playerRace = UnitRace("player")
-local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Pandaren", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
+local playerStandingArgKey = standingArgKey(playerRace)
+local showOtherRaces = false
+local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
 races[playerRace] = true -- adds player race if it's missing from race set
 local defaults = {
 	global = {
 		exitView = 1,
 		petBattleView = 1,
-		humanDistance = 3.5,
-		worgenDistance = 4.6,
 		ridingDistance = 8.5,
 		eliteDistance = 8.5,
 		bossDistance = 50
 	}
 }
+
+for race in pairs(set {"Worgen"}) do
+	defaults.global[standingArgKey(race)] =  4.6
+end
+
+for race in pairs(set {"Night Elf", "Nightborne"}) do
+	defaults.global[standingArgKey(race)] =  4
+end
+
+for race in pairs(set {"Draenei", "Pandaren" ,"Orc", "Troll", "Mag'har Orc", "Zandalari Troll", "Lightforged Draenei"}) do
+	defaults.global[standingArgKey(race)] =  4.5
+end
+
+for race in pairs(set {"Human", "Dwarf", "Undead", "Blood Elf" ,"Void Elf", "Dark Iron Dwarf"}) do
+	defaults.global[standingArgKey(race)] = 3.5
+end
+
+for race in pairs(set {"Gnome", "Goblin", "Mechagnome", "Vulpera"}) do
+	defaults.global[standingArgKey(race)] = 2
+end
+
+for race in pairs(set {"Tauren", "Kul Tiran", "Highmountain Tauren"}) do
+	defaults.global[standingArgKey(race)] = 5.2
+end
+
 local settings = defaults.global
 local units = {}
 units[1] = 'target'
@@ -77,9 +102,8 @@ function autoZoom()
 	local unit
 	local enemyCount = 0
 
-	if (isWorgenForm()) then
-		targetZoom = settings.worgenDistance
-	else
+	targetZoom = settings[playerStandingArgKey]
+	if (playerRace == "Worgen" and not isWorgenForm()) then
 		targetZoom = settings.humanDistance
 	end
 	
@@ -169,6 +193,10 @@ function distanceOption()
 	}
 end
 
+function addon:defaultStandingDistances()
+	settings = defaults.global
+end
+
 -- options
 function addon:options()
 	local options = {
@@ -185,7 +213,26 @@ function addon:options()
 						inline = true,
 						order = 1,
 						name = "Standing Distances by Race",
-						args = {} -- dynamically populated below
+						args = {
+							toggleHidden = {
+								type = "execute",
+								name = function()
+									if showOtherRaces then
+										return "Show Fewer Races"
+									else
+										return "Show More Races"
+									end
+								end,
+								func = function() showOtherRaces = not showOtherRaces end,
+								order = 99
+							},
+							restoreDefaults = {
+								type = "execute",
+								name = "Restore Defaults",
+								func = function() addon:defaultStandingDistances() end,
+								order = 100
+							}
+						}
 					},
 					contexturalDistances = {
 						type = "group",
@@ -236,11 +283,13 @@ function addon:options()
 
 	local standingDistances = options.args.general.args.standingDistances
 	for race in pairs(races) do
-		standingDistances.args[race:lower() .. 'Distance'] = merge(distanceOption(), {
-			name = race
+		standingDistances.args[standingArgKey(race)] = merge(distanceOption(), {
+			name = race,
+			hidden = function() return (not showOtherRaces) and ((playerRace ~= race) and (playerRace ~= "Worgen" or race ~= "Human")) end
 		})
 	end
-	standingDistances.args[playerRace:lower() .. 'Distance'].order = 1
+	local playerStandingArgKey = playerRace:gsub("^.", string.lower):gsub(" ", "") .. 'Distance'
+	standingDistances.args[playerStandingArgKey].order = 1
 	if (playerRace == "Worgen") then
 		options.args.general.args.standingDistances.args.humanDistance.order = 2
 	end

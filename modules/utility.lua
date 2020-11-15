@@ -1,4 +1,4 @@
-local function deepCopy(tree)
+function deepCopy(tree)
 	if not tree then return nil
 	elseif type(tree) == "table" then
 		local branch = {}
@@ -22,4 +22,8 @@ end
 function merge(target, source)
 	for key, value in pairs(source) do target[key] = value end
 	return target
+end
+
+function standingArgKey(race)
+    return race:gsub("^.", string.lower):gsub(" ", "") .. 'Distance'
 end
