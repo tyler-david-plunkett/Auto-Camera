@@ -1,7 +1,7 @@
 local addonName, vars = ...
 ActionCamera = LibStub("AceAddon-3.0"):NewAddon(addonName)
 local addon = ActionCamera
-local AUTO_CAMERA_ENABLED = true -- todo> make this a setting
+local AUTO_CAMERA_ENABLED = false
 local IN_PET_BATTLE = false
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
@@ -12,6 +12,7 @@ local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", 
 races[playerRace] = true -- adds player race if it's missing from race set
 local defaults = {
     global = {
+        enabledOnLoad = false,
         exitView = 1,
         petBattleView = 1,
         ridingDistance = 8.5,
@@ -77,14 +78,10 @@ function addon:OnInitialize()
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options, nil)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName, nil, "general")
     options.args.globals = LibStub("AceDBOptions-3.0"):GetOptionsTable(addon.db)
-end
-
-function addon:OnEnable()
--- Called when the addon is enabled
-end
-
-function addon:OnDisable()
--- Called when the addon is disabled
+    AUTO_CAMERA_ENABLED = settings.enabledOnLoad
+    if (AUTO_CAMERA_ENABLED) then
+        addon:autoZoom()
+    end
 end
 
 -- helper functions
@@ -93,11 +90,11 @@ function toggleAutoCamera()
         AUTO_CAMERA_ENABLED = false
     else
         AUTO_CAMERA_ENABLED = true
-        autoZoom()
+        addon:autoZoom()
     end
 end
 
-function autoZoom()
+function addon:autoZoom()
     local targetZoom
     local currentCameraZoom = GetCameraZoom()
     local unit
@@ -131,7 +128,6 @@ function autoZoom()
 
     if (targetZoom < enemyPackDistance) then targetZoom = enemyPackDistance end
 
-    -- local distanceDiff = distanceIndexedCameraZoom[distancePartition] - currentCameraZoom
     local distanceDiff = targetZoom - currentCameraZoom
     
     -- todo fix over-zoom bug
@@ -151,7 +147,7 @@ function autoZoom()
     end
 
     if (addon:isRunning()) then
-        C_Timer.After(deltaTime, autoZoom)
+        C_Timer.After(deltaTime, function() addon:autoZoom() end)
     else
         MoveViewInStop()
         MoveViewOutStop()
@@ -192,7 +188,9 @@ end
 function addon:options()
     local options = {
         type = 'group',
-        set = function(info, val) settings[info[#info]] = val end,
+        set = function(info, val)
+            settings[info[#info]] = val
+        end,
         get = function(info) return settings[info[#info]] end,
         args = {
             general = {
@@ -203,7 +201,7 @@ function addon:options()
                         type = "group",
                         inline = true,
                         order = 1,
-                        name = "Standing Distances by Race",
+                        name = "Standing Camera Distances by Race",
                         args = {
                             toggleHidden = {
                                 type = "execute",
@@ -225,31 +223,28 @@ function addon:options()
                             }
                         }
                     },
-                    contexturalDistances = {
+                    contextualDistances = {
                         type = "group",
                         inline = true,
                         order = 2,
-                        name = "Contextual Distances",
+                        name = "Contextual Camera Distances",
                         args = {
                             ridingDistance = merge(distanceOption(), {
                                 name = 'Riding',
-								desc = 'Camera distance when on a mount or in a vehicle',
-								order = 1
-							}),
-							normalEnemyDistance = merge(distanceOption(), {
-                                name = 'Normal Enemy Distance',
-								desc = 'Distance multiplier for normal enemies',
-								order = 2
-							}),
+                                desc = 'Camera distance when on a mount or in a vehicle',
+                                order = 1
+                            }),
+                            normalEnemyDistance = merge(distanceOption(), {
+                                name = 'Per Normal Enemy',
+                                order = 2
+                            }),
                             eliteEnemyDistance = merge(distanceOption(), {
-                                name = 'Elite Enemy Distance',
-                                desc = 'Distance multiplier for elite enemies',
-								order = 3
+                                name = 'Per Elite Enemy',
+                                order = 3
                             }),
                             bossEnemyDistance = merge(distanceOption(), {
-                                name = 'Boss Enemy Distance',
-                                desc = 'Distance multiplier for boss enemies',
-								order = 4
+                                name = 'Per Boss Enemy',
+                                order = 4
                             }),
                         }
                     },
@@ -259,6 +254,11 @@ function addon:options()
                         order = 3,
                         name = "Miscellaneous",
                         args = {
+                            enabledOnLoad = {
+                                type = "toggle",
+                                name = "Enabled on Start-Up",
+                                desc = "Controls if automatic camera zooming should begin on start-up"
+                            },
                             exitView = merge(viewOption(), {
                                 type = 'range',
                                 min = 1,
@@ -311,10 +311,6 @@ SlashCmdList["AC"] = function(arg)
     end
 end
 
-if (AUTO_CAMERA_ENABLED) then
-    autoZoom()
-end
-
 -- events
 local function OnEvent(self, event, ...)
     if event == "PET_BATTLE_OPENING_START" then
@@ -322,12 +318,17 @@ local function OnEvent(self, event, ...)
     elseif event == "PET_BATTLE_CLOSE" then
         IN_PET_BATTLE = false
         if addon:isRunning() then
-            autoZoom()
+            addon:autoZoom()
         end
+    elseif event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
     end
+end
+
+function addon:INSTANCE_ENCOUNTER_ENGAGE_UNIT()
 end
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("PET_BATTLE_OPENING_START")
 f:RegisterEvent("PET_BATTLE_CLOSE")
+f:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
 f:SetScript("OnEvent", OnEvent)
