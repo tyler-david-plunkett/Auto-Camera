@@ -1,7 +1,7 @@
  <Bindings>
  	<Binding name="TOGGLE_AUTO_CAMERA" runOnUp="true" header="AUTO_CAMERA" category="ADDONS">
  		if keystate == "down" then
- 			toggleAutoCamera()
+ 			ActionCamera:toggleAutoCamera()
  		end
  	</Binding>
  </Bindings>

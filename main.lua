@@ -1,12 +1,19 @@
+--[[
+    todo
+    restore defaults not working
+    switching target causes unintended zoom-out
+]]
+
+
 local addonName, vars = ...
 ActionCamera = LibStub("AceAddon-3.0"):NewAddon(addonName)
 local addon = ActionCamera
 local AUTO_CAMERA_ENABLED = false
 local IN_PET_BATTLE = false
+local IN_ENCOUNTER = false
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
 local playerRace = UnitRace("player")
-local playerStandingArgKey = standingArgKey(playerRace)
 local showOtherRaces = false
 local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
 races[playerRace] = true -- adds player race if it's missing from race set
@@ -15,12 +22,40 @@ local defaults = {
         enabledOnLoad = false,
         exitView = 1,
         petBattleView = 1,
+        instanceEncounterView = 1,
         ridingDistance = 8.5,
         normalEnemyDistance = 4,
         eliteEnemyDistance = 4,
+        raidEnemyDistance = 8,
         bossEnemyDistance = 50
     }
 }
+
+function standingArgKey(race)
+    return camelCase(race) .. 'Distance'
+end
+
+function enemyArgKey(unit)
+    local enemyType
+	if (
+		(unitClassification == "worldboss" or
+		(unitClassification == "elite" and UnitLevel(unit) == -1))
+	) then
+        enemyType = "boss"
+    elseif (IN_RAID) then
+        enemyType = "raid"
+	elseif (
+		unitClassification == "elite"
+	) then
+		enemyType = "elite"
+	else
+		enemyType = "normal"
+    end
+    
+    return enemyType .. "EnemyDistance"
+end
+
+local playerStandingArgKey = standingArgKey(playerRace)
 
 for race in pairs(set {"Worgen"}) do
     defaults.global[standingArgKey(race)] =  4.6
@@ -57,7 +92,10 @@ BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
 BINDING_NAME_TOGGLE_AUTO_CAMERA = "Toggle On/Off"
 
 function addon:isRunning() 
-    return AUTO_CAMERA_ENABLED and not IN_PET_BATTLE
+    return 
+        AUTO_CAMERA_ENABLED and
+        not IN_ENCOUNTER and
+        not IN_PET_BATTLE
 end
 
 function addon:RefreshConfig()
@@ -85,7 +123,7 @@ function addon:OnInitialize()
 end
 
 -- helper functions
-function toggleAutoCamera()
+function addon:toggleAutoCamera()
     if (AUTO_CAMERA_ENABLED) then
         AUTO_CAMERA_ENABLED = false
     else
@@ -153,6 +191,8 @@ function addon:autoZoom()
         MoveViewOutStop()
         if not AUTO_CAMERA_ENABLED then
             SetView(settings.exitView)
+        elseif IN_ENCOUNTER then
+            SetView(settings.instanceEncounterView)
         elseif IN_PET_BATTLE then
             SetView(settings.petBattleView)
         end
@@ -214,12 +254,6 @@ function addon:options()
                                 end,
                                 func = function() showOtherRaces = not showOtherRaces end,
                                 order = 99
-                            },
-                            restoreDefaults = {
-                                type = "execute",
-                                name = "Restore Defaults",
-                                func = function() addon:defaultStandingDistances() end,
-                                order = 100
                             }
                         }
                     },
@@ -242,10 +276,14 @@ function addon:options()
                                 name = 'Per Elite Enemy',
                                 order = 3
                             }),
+                            raidEnemyDistance = merge(distanceOption(), {
+                                name = 'Per Raid Enemy',
+                                order = 8
+                            }),
                             bossEnemyDistance = merge(distanceOption(), {
                                 name = 'Per Boss Enemy',
                                 order = 4
-                            }),
+                            })
                         }
                     },
                     misc = {
@@ -260,22 +298,24 @@ function addon:options()
                                 desc = "Controls if automatic camera zooming should begin on start-up"
                             },
                             exitView = merge(viewOption(), {
-                                type = 'range',
-                                min = 1,
-                                max = 5,
-                                step = 1,
                                 name = 'Exit View',
                                 desc = 'The camera view to go to when toggling Auto-Camera off'
                             }),
+                            instanceEncounterView = merge(viewOption(), {
+                                name = 'Instance Encounter View',
+                                desc = 'The camera view to go to during an encounter (e.g. boss battle)'
+                            }),
                             petBattleView = merge(viewOption(), {
-                                type = 'range',
-                                min = 1,
-                                max = 5,
-                                step = 1,
                                 name = 'Pet Battle View',
                                 desc = 'The camera view to go to during a pet battle.'
                             })
                         }
+                    },
+                    restoreDefaults = {
+                        type = "execute",
+                        name = "Restore Defaults",
+                        func = function() addon:defaultStandingDistances() end,
+                        order = 100
                     }
                 }
             }
@@ -304,7 +344,7 @@ local colorEnd = "\124r"
 SLASH_AC1 = "/ac"
 SlashCmdList["AC"] = function(arg)
     if arg == "toggle" then
-        toggleAutoCamera()
+        addon:toggleAutoCamera()
     else
         print(colorStart .. yellow .. "Auto-Camera console commands:" .. colorEnd)
         print("/ac toggle    " .. colorStart .. yellow .. "toggles Auto-Camera on/off" .. colorEnd)
@@ -313,22 +353,45 @@ end
 
 -- events
 local function OnEvent(self, event, ...)
-    if event == "PET_BATTLE_OPENING_START" then
-        IN_PET_BATTLE = true
-    elseif event == "PET_BATTLE_CLOSE" then
-        IN_PET_BATTLE = false
-        if addon:isRunning() then
-            addon:autoZoom()
-        end
-    elseif event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
+    addon[event](self, event, ...)
+end
+
+function addon:PET_BATTLE_OPENING_START()
+    IN_PET_BATTLE = true
+end
+
+function addon:PET_BATTLE_CLOSE()
+    IN_PET_BATTLE = false
+    if addon:isRunning() then
+        addon:autoZoom()
     end
 end
 
-function addon:INSTANCE_ENCOUNTER_ENGAGE_UNIT()
+function addon:ENCOUNTER_START()
+    IN_ENCOUNTER = true
+end
+
+function addon:ENCOUNTER_END()
+    IN_ENCOUNTER = false
+    if addon:isRunning() then
+        addon:autoZoom()
+    end
+end
+
+function addon:PLAYER_ENTERING_WORLD()
+    local mapId = C_Map.GetBestMapForUnit("player")
+    local x, y = C_Map.GetPlayerMapPosition(mapId, "player")
+    if x == nil and y == nil then -- if in an instance
+        local _, type = GetInstanceInfo()
+        IN_RAID = type == "raid"
+        print("IN_RAID", IN_RAID)
+    end
 end
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("PET_BATTLE_OPENING_START")
 f:RegisterEvent("PET_BATTLE_CLOSE")
-f:RegisterEvent("INSTANCE_ENCOUNTER_ENGAGE_UNIT")
+f:RegisterEvent("ENCOUNTER_START")
+f:RegisterEvent("ENCOUNTER_END")
+f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:SetScript("OnEvent", OnEvent)

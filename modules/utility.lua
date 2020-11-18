@@ -27,22 +27,3 @@ end
 function camelCase(str)
     return str:gsub("^.", string.lower):gsub(" ", "")
 end
-
-function standingArgKey(race)
-    return camelCase(race) .. 'Distance'
-end
-
-function enemyArgKey(unit)
-	if (
-		(unitClassification == "worldboss" or
-		(unitClassification == "elite" and UnitLevel(unit) == -1))
-	) then
-		return "bossEnemyDistance"
-	elseif (
-		unitClassification == "elite"
-	) then
-		return "bossEnemyDistance"
-	else
-		return "normalEnemyDistance"
-	end
-end
