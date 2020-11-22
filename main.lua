@@ -380,11 +380,11 @@ end
 
 function addon:PLAYER_ENTERING_WORLD()
     local mapId = C_Map.GetBestMapForUnit("player")
+    if (mapId == nil) then return end -- TODO what do when this happens?
     local x, y = C_Map.GetPlayerMapPosition(mapId, "player")
     if x == nil and y == nil then -- if in an instance
-        local _, type = GetInstanceInfo()
-        IN_RAID = type == "raid"
-        print("IN_RAID", IN_RAID)
+        local _, instanceType = GetInstanceInfo()
+        IN_RAID = instanceType == "raid"
     end
 end
 
