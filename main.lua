@@ -1,6 +1,5 @@
 --[[
     todo
-    restore defaults not working
     switching target causes unintended zoom-out
 ]]
 
@@ -13,6 +12,7 @@ local IN_PET_BATTLE = false
 local IN_ENCOUNTER = false
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
+local prevSettings = nil
 local playerRace = UnitRace("player")
 local showOtherRaces = false
 local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
@@ -213,14 +213,20 @@ function distanceOption()
     return {
         type = 'range',
         min = 0,
-        max = 50,
+        max = 30,
         step = 0.1,
         order = 3
     }
 end
 
-function addon:restoreDefaults()
-    assign(settings, defaults.global)
+function addon:toggleDefaults()
+    if (prevSettings == nil) then 
+        prevSettings = deepCopy(settings)
+        assign(settings, defaults.global)
+    else
+        assign(settings, prevSettings)
+        prevSettings = nil
+    end
 end
 
 -- options
@@ -228,6 +234,7 @@ function addon:options()
     local options = {
         type = 'group',
         set = function(info, val)
+            prevSettings = nil
             settings[info[#info]] = val
         end,
         get = function(info) return settings[info[#info]] end,
@@ -310,10 +317,16 @@ function addon:options()
                             })
                         }
                     },
-                    restoreDefaults = {
+                    toggleDefaults = {
                         type = "execute",
-                        name = "Restore Defaults",
-                        func = function() addon:restoreDefaults() end,
+                        name = function()
+                            if (prevSettings == nil) then
+                                return "Defaults"
+                            else
+                                return "Undo"
+                            end
+                        end,
+                        func = function() addon:toggleDefaults() end,
                         order = 100
                     }
                 }
