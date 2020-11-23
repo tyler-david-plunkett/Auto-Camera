@@ -219,7 +219,7 @@ function distanceOption()
     }
 end
 
-function addon:restoreDistances()
+function addon:restoreDefaults()
     assign(settings, defaults.global)
 end
 
@@ -313,7 +313,7 @@ function addon:options()
                     restoreDefaults = {
                         type = "execute",
                         name = "Restore Defaults",
-                        func = function() addon:restoreDistances() end,
+                        func = function() addon:restoreDefaults() end,
                         order = 100
                     }
                 }
