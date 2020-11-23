@@ -98,9 +98,8 @@ function addon:isRunning()
         not IN_PET_BATTLE
 end
 
-function addon:RefreshConfig()
+function addon:loadSettings()
     settings = addon.db.global
-    addon.settings = settings
     for key, value in pairs(defaults.global) do
         if settings[key] == nil then
             settings[key] = deepCopy(value)
@@ -112,7 +111,7 @@ end
 function addon:OnInitialize()
     local options = addon:options()
     addon.db = LibStub("AceDB-3.0"):New("AutoCameraDB", defaultSettings, true)
-    addon:RefreshConfig()
+    addon:loadSettings()
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options, nil)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName, nil, "general")
     options.args.globals = LibStub("AceDBOptions-3.0"):GetOptionsTable(addon.db)
@@ -220,8 +219,8 @@ function distanceOption()
     }
 end
 
-function addon:defaultStandingDistances()
-    settings = defaults.global
+function addon:restoreDistances()
+    assign(settings, defaults.global)
 end
 
 -- options
@@ -314,7 +313,7 @@ function addon:options()
                     restoreDefaults = {
                         type = "execute",
                         name = "Restore Defaults",
-                        func = function() addon:defaultStandingDistances() end,
+                        func = function() addon:restoreDistances() end,
                         order = 100
                     }
                 }
