@@ -1,5 +1,5 @@
 #!/bin/bash
 
 mkdir libs
-wget https://www.wowace.com/projects/ace3/files/latest Ace3.zip
+wget -O Ace3.zip https://www.wowace.com/projects/ace3/files/latest
 unzip Ace3.zip libs
