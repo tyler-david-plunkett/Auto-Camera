@@ -1,9 +1,3 @@
---[[
-    todo
-    switching target causes unintended zoom-out
-]]
-
-
 local addonName, vars = ...
 ActionCamera = LibStub("AceAddon-3.0"):NewAddon(addonName)
 local addon = ActionCamera
