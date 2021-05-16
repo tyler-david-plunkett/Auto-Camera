@@ -1,9 +1,3 @@
-.vs/ProjectSettings.json
-.vs/slnx.sqlite
-.vs/VSWorkspaceState.json
-.vs/dynamic-zoom/v15/.suo
-modules/noDogsAllowed.lua
-modules/spells.lua
+.vs/*
 libs/*
-scratch.lua
 Auto-Camera.zip
