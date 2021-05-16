@@ -32,12 +32,14 @@ jobs:
         with:
           name: Auto-Camera.zip
           path: Auto-Camera.zip
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Attaches artifact to release
+      - name: Upload artifact to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          upload_url: ${{ steps.create_distribution.outputs.upload_url }}
-          asset_path: Auto-Camera.zip
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: Auto-Camera.zip
           asset_name: Auto-Camera.zip
-          asset_content_type: application/zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: ""
