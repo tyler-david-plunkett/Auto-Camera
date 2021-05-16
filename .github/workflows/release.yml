@@ -6,7 +6,7 @@ name: CI
 # events but only for the master branch
 on:
   release:
-    branches: [ master ]
+    branches: [master]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -20,14 +20,14 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repository
         uses: actions/checkout@v2
-        
+
       # Creates /dist and moves distribution files into it
       - name: Create Distribution
         run: ./build.sh
-      
+
       # Creates artifact
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: Auto-Camera
-          path: Auto-Camera
+          name: Auto-Camera.zip
+          path: Auto-Camera.zip
