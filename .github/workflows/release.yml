@@ -21,6 +21,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Installs libraries
+      - name: Intall Libraries
+        id: install_libraries
+        run: ./installLibs.sh
+
       # Creates /dist and moves distribution files into it
       - name: Create Distribution
         id: create_distribution
