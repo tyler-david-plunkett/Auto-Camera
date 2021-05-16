@@ -10,6 +10,8 @@ local addon = ActionCamera
 local AUTO_CAMERA_ENABLED = false
 local IN_PET_BATTLE = false
 local IN_ENCOUNTER = false
+local IN_RAID = false
+local IN_DUNGEON = false
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
 local prevSettings = nil
@@ -42,7 +44,7 @@ function enemyArgKey(unit)
 		(unitClassification == "elite" and UnitLevel(unit) == -1))
 	) then
         enemyType = "boss"
-    elseif (IN_RAID) then
+    elseif (IN_RAID or IN_DUNGEON) then
         enemyType = "raid"
 	elseif (
 		unitClassification == "elite"
@@ -149,7 +151,7 @@ function addon:autoZoom()
         targetZoom = settings.ridingDistance
     end
 
-    local enemyPackDistance = 0
+    local enemyPackDistance = targetZoom
     for i, unit in ipairs(units) do
         local unitClassification = UnitClassification(unit)
         local unitLevel = UnitLevel(unit)
@@ -397,6 +399,7 @@ function addon:PLAYER_ENTERING_WORLD()
     if x == nil and y == nil then -- if in an instance
         local _, instanceType = GetInstanceInfo()
         IN_RAID = instanceType == "raid"
+        IN_DUNGEON = instanceType == "raid"
     end
 end
 
