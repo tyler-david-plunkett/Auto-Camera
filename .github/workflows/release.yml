@@ -34,7 +34,8 @@ jobs:
           asset_name: Auto-Camera.zip
           tag: ${{ github.ref }}
           overwrite: true
-          body: ""
+          body: "beta release"
+          name: "0.1.0"
 
       - name: Upload artifact to release
         uses: svenstaro/upload-release-action@v2
@@ -44,7 +45,8 @@ jobs:
           asset_name: Auto-Camera-classic.zip
           tag: ${{ github.ref }}
           overwrite: true
-          body: ""
+          body: "beta release"
+          name: "0.1.0"
 
       - name: Upload artifact to release
         uses: svenstaro/upload-release-action@v2
@@ -54,4 +56,5 @@ jobs:
           asset_name: Auto-Camera-bc.zip
           tag: ${{ github.ref }}
           overwrite: true
-          body: ""
+          body: "beta release"
+          name: "0.1.0"
