@@ -35,3 +35,23 @@ jobs:
           tag: ${{ github.ref }}
           overwrite: true
           body: ""
+
+      - name: Upload artifact to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: Auto-Camera.zip
+          asset_name: Auto-Camera-classic.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: ""
+
+      - name: Upload artifact to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: Auto-Camera.zip
+          asset_name: Auto-Camera-bc.zip
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: ""
