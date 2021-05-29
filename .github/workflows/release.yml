@@ -27,37 +27,7 @@ jobs:
           path: Auto-Camera.zip
 
       - name: Upload artifact to release
-        uses: svenstaro/upload-release-action@v2
+        uses: actions/upload-artifact@v2
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: Auto-Camera.zip
-          asset_name: Auto-Camera.zip
-          tag: ${{ github.ref }}
-          overwrite: true
-          body: "beta release"
-          name: "0.1.0"
-          asset_content_type: "application/zip"
-
-      - name: Upload artifact to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: Auto-Camera.zip
-          asset_name: Auto-Camera-classic.zip
-          tag: ${{ github.ref }}
-          overwrite: true
-          body: "beta release"
-          name: "0.1.0"
-          asset_content_type: "application/zip"
-
-      - name: Upload artifact to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: Auto-Camera.zip
-          asset_name: Auto-Camera-bc.zip
-          tag: ${{ github.ref }}
-          overwrite: true
-          body: "beta release"
-          name: "0.1.0"
-          asset_content_type: "application/zip"
+          name: ${{ github.ref }}
+          path: Auto-Camera.zip
