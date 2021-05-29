@@ -36,6 +36,7 @@ jobs:
           overwrite: true
           body: "beta release"
           name: "0.1.0"
+          content_type: "application/zip"
 
       - name: Upload artifact to release
         uses: svenstaro/upload-release-action@v2
@@ -47,6 +48,7 @@ jobs:
           overwrite: true
           body: "beta release"
           name: "0.1.0"
+          content_type: "application/zip"
 
       - name: Upload artifact to release
         uses: svenstaro/upload-release-action@v2
@@ -58,3 +60,4 @@ jobs:
           overwrite: true
           body: "beta release"
           name: "0.1.0"
+          content_type: "application/zip"
