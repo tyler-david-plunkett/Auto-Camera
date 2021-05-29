@@ -26,16 +26,16 @@ jobs:
           name: Auto-Camera.zip
           path: Auto-Camera.zip
 
-      - name: Get version from tag
-        id: get-version
-        uses: actions/github-script@v4
-        with:
-          script: |
-            const version = github.ref.split("/")[2]
-            core.setOutput("version", version)
+      # - name: Get version from tag
+      #   id: get-version
+      #   uses: actions/github-script@v4
+      #   with:
+      #     script: |
+      #       const version = github.ref.split("/")[2]
+      #       core.setOutput("version", version)
 
       - name: Upload artifact to release
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ steps.get-version.outputs.version }}
+          name: 0.1.0
           path: Auto-Camera.zip
