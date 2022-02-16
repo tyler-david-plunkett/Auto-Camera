@@ -20,22 +20,19 @@ jobs:
         id: create_distribution
         run: ./build.sh
 
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: Auto-Camera.zip
-          path: Auto-Camera.zip
-
-      # - name: Get version from tag
-      #   id: get-version
-      #   uses: actions/github-script@v4
-      #   with:
-      #     script: |
-      #       const version = github.ref.split("/")[2]
-      #       core.setOutput("version", version)
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
 
       - name: Upload artifact to release
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-release-asset@v1
         with:
-          name: Auto-Camera.zip
-          path: .
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: Auto-Camera.zip
+          asset_name: Auto-Camera.zip
+          asset_content_type: application/zip
