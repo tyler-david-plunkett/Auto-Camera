@@ -19,7 +19,7 @@ jobs:
 
       - name: Create Distribution
         id: create_distribution
-        run: ./build.sh
+        run: ./build.sh "${{ github.ref_name }}"
 
       - name: Create Release
         id: create_release
