@@ -25,7 +25,7 @@ cp Auto-Camera-BCC.toc Auto-Camera/Auto-Camera.toc
 zip -r Auto-Camera-bcc.zip Auto-Camera
 
 # create release.json
-releaseJSON='{"releases":[{"filename":"%s.zip","metadata":[{"flavor":"mainline","interface":%s}]},{"filename":"%s-classic.zip","metadata":[{"flavor":"classic","interface":%s}]},{"filename":"%s-bcc.zip","metadata":[{"flavor":"bcc","interface":%s}]}]}'
+releaseJSON='{"releases":[{"filename":"Auto-Camera-%s.zip","metadata":[{"flavor":"mainline","interface":%s}]},{"filename":"Auto-Camera-%s-classic.zip","metadata":[{"flavor":"classic","interface":%s}]},{"filename":"Auto-Camera-%s-bcc.zip","metadata":[{"flavor":"bcc","interface":%s}]}]}'
 printf "$releaseJSON" "$addonVersion" "$retailInterfaceVersion" "$addonVersion" "$classicInterfaceVersion" "$addonVersion" "$bccInterfaceVersion" > release.json
 
 # clean up
