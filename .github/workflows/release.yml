@@ -30,12 +30,42 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
 
-      - name: Upload artifact to release
+      - name: Upload release json artifact to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release.json
+          asset_name: release.json
+          asset_content_type: application/json
+
+      - name: Upload retail artifact to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./Auto-Camera.zip
-          asset_name: ${{ github.ref_name }}
+          asset_name: Auto-Camera-${{ github.ref_name }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload classic artifact to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./Auto-Camera-classic.zip
+          asset_name: Auto-Camera-${{ github.ref_name }}-classic.zip
+          asset_content_type: application/zip
+
+      - name: Upload bcc artifact to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./Auto-Camera-bcc.zip
+          asset_name: Auto-Camera-${{ github.ref_name }}-bcc.zip
           asset_content_type: application/zip
