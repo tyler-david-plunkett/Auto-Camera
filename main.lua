@@ -1,7 +1,7 @@
 local addonName, vars = ...
-ActionCamera = LibStub("AceAddon-3.0"):NewAddon(addonName)
-local addon = ActionCamera
-local AUTO_CAMERA_ENABLED = false
+AutoCamera = LibStub("AceAddon-3.0"):NewAddon(addonName)
+local addon = AutoCamera
+local STAND_BY = false
 local IN_PET_BATTLE = false
 local IN_ENCOUNTER = false
 local IN_RAID = false
@@ -15,8 +15,9 @@ local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", 
 races[playerRace] = true -- adds player race if it's missing from race set
 local defaults = {
     global = {
-        enabledOnLoad = false,
-        exitView = 1,
+        standByOnLoad = false,
+        standByBehavior = "maxDistance",
+        manualStandByView = 1,
         petBattleView = 1,
         instanceEncounterView = 1,
         ridingDistance = 8.5,
@@ -85,11 +86,11 @@ for i = 1, 10 do
 end
 
 BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
-BINDING_NAME_TOGGLE_AUTO_CAMERA = "Toggle On/Off"
+BINDING_NAME_TOGGLE_STAND_BY = "Toggle Stand-By mode"
 
 function addon:isRunning() 
     return 
-        AUTO_CAMERA_ENABLED and
+        not STAND_BY and
         not IN_ENCOUNTER and
         not IN_PET_BATTLE
 end
@@ -109,21 +110,21 @@ function addon:OnInitialize()
     addon.db = LibStub("AceDB-3.0"):New("AutoCameraDB", defaultSettings, true)
     addon:loadSettings()
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options, nil)
-    LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName, nil, "general")
+    LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
     options.args.globals = LibStub("AceDBOptions-3.0"):GetOptionsTable(addon.db)
-    AUTO_CAMERA_ENABLED = settings.enabledOnLoad
-    if (AUTO_CAMERA_ENABLED) then
+    STAND_BY = settings.standByOnLoad
+    if (not STAND_BY) then
         addon:autoZoom()
     end
 end
 
 -- helper functions
-function addon:toggleAutoCamera()
-    if (AUTO_CAMERA_ENABLED) then
-        AUTO_CAMERA_ENABLED = false
-    else
-        AUTO_CAMERA_ENABLED = true
+function addon:toggleStandBy()
+    if (STAND_BY) then
+        STAND_BY = false
         addon:autoZoom()
+    else
+        STAND_BY = true
     end
 end
 
@@ -184,12 +185,24 @@ function addon:autoZoom()
     else
         MoveViewInStop()
         MoveViewOutStop()
-        if not AUTO_CAMERA_ENABLED then
-            SetView(settings.exitView)
+        if STAND_BY then
+            if (settings.standByBehavior == "view") then
+                SetView(settings.manualStandByView)
+            elseif (settings.standByBehavior == "maxDistance") then
+                CameraZoomOut(30)
+            end
         elseif IN_ENCOUNTER then
-            SetView(settings.instanceEncounterView)
+            if (settings.standByBehavior == "view") then
+                SetView(settings.instanceEncounterView)
+            elseif (settings.standByBehavior == "maxDistance") then
+                CameraZoomOut(30)
+            end
         elseif IN_PET_BATTLE then
-            SetView(settings.petBattleView)
+            if (settings.standByBehavior == "view") then
+                SetView(settings.petBattleView)
+            elseif (settings.standByBehavior == "maxDistance") then
+                CameraZoomOut(30)
+            end
         end
     end
 
@@ -229,108 +242,136 @@ end
 function addon:options()
     local options = {
         type = 'group',
-        set = function(info, val)
+        name = 'Auto-Camera',
+        set = function(info, value)
             prevSettings = nil
-            settings[info[#info]] = val
+            settings[info[#info]] = value
         end,
         get = function(info) return settings[info[#info]] end,
         args = {
-            general = {
+            control = {
                 type = "group",
-                name = "General",
+                inline = true,
+                order = 1,
+                name = "Control",
                 args = {
-                    standingDistances = {
-                        type = "group",
-                        inline = true,
-                        order = 1,
-                        name = "Standing Camera Distances by Race",
-                        args = {
-                            toggleHidden = {
-                                type = "execute",
-                                name = function()
-                                    if showOtherRaces then
-                                        return "Show Fewer Races"
-                                    else
-                                        return "Show More Races"
-                                    end
-                                end,
-                                func = function() showOtherRaces = not showOtherRaces end,
-                                order = 99
-                            }
-                        }
+                    standByOnLoad = {
+                        type = "toggle",
+                        name = "Start on stand-by",
+                        desc = "Controls if automatic camera zooming should be on stand-by on load"
                     },
-                    contextualDistances = {
-                        type = "group",
-                        inline = true,
-                        order = 2,
-                        name = "Contextual Camera Distances",
-                        args = {
-                            ridingDistance = merge(distanceOption(), {
-                                name = 'Riding',
-                                desc = 'Camera distance when on a mount or in a vehicle',
-                                order = 1
-                            }),
-                            normalEnemyDistance = merge(distanceOption(), {
-                                name = 'Per Normal Enemy',
-                                order = 2
-                            }),
-                            eliteEnemyDistance = merge(distanceOption(), {
-                                name = 'Per Elite Enemy',
-                                order = 3
-                            }),
-                            raidEnemyDistance = merge(distanceOption(), {
-                                name = 'Per Raid Enemy',
-                                order = 8
-                            }),
-                            bossEnemyDistance = merge(distanceOption(), {
-                                name = 'Per Boss Enemy',
-                                order = 4
-                            })
-                        }
-                    },
-                    misc = {
-                        type = "group",
-                        inline = true,
-                        order = 3,
-                        name = "Miscellaneous",
-                        args = {
-                            enabledOnLoad = {
-                                type = "toggle",
-                                name = "Enabled on Start-Up",
-                                desc = "Controls if automatic camera zooming should begin on start-up"
-                            },
-                            exitView = merge(viewOption(), {
-                                name = 'Exit View',
-                                desc = 'The camera view to go to when toggling Auto-Camera off'
-                            }),
-                            instanceEncounterView = merge(viewOption(), {
-                                name = 'Instance Encounter View',
-                                desc = 'The camera view to go to during an encounter (e.g. boss battle)'
-                            }),
-                            petBattleView = merge(viewOption(), {
-                                name = 'Pet Battle View',
-                                desc = 'The camera view to go to during a pet battle.'
-                            })
-                        }
-                    },
-                    toggleDefaults = {
+                }
+            },
+            standingDistances = {
+                type = "group",
+                inline = true,
+                order = 2,
+                name = "Minimum Camera Distances by Race",
+                args = {
+                    toggleHidden = {
                         type = "execute",
                         name = function()
-                            if (prevSettings == nil) then
-                                return "Defaults"
+                            if showOtherRaces then
+                                return "Show Fewer Races"
                             else
-                                return "Undo"
+                                return "Show More Races"
                             end
                         end,
-                        func = function() addon:toggleDefaults() end,
-                        order = 100
+                        func = function() showOtherRaces = not showOtherRaces end,
+                        order = 99
                     }
                 }
+            },
+            contextualDistances = {
+                type = "group",
+                inline = true,
+                order = 3,
+                name = "Contextual Camera Distances",
+                args = {
+                    ridingDistance = merge(distanceOption(), {
+                        name = 'Riding',
+                        desc = 'Camera distance when riding on a mount or in a vehicle',
+                        order = 1
+                    }),
+                    normalEnemyDistance = merge(distanceOption(), {
+                        name = 'Per Normal Enemy',
+                        desc = 'Distance to add per normal enemy on screen near the player character',
+                        order = 2
+                    }),
+                    eliteEnemyDistance = merge(distanceOption(), {
+                        name = 'Per Elite Enemy',
+                        desc = 'Distance to add per elite enemy on screen near the player character',
+                        order = 3
+                    }),
+                    raidEnemyDistance = merge(distanceOption(), {
+                        name = 'Per Raid Enemy',
+                        desc = 'Distance to add per raid enemy on screen near the player character',
+                        order = 8
+                    }),
+                    bossEnemyDistance = merge(distanceOption(), {
+                        name = 'Per Boss Enemy',
+                        desc = 'Distance to add per boss enemy on screen near the player character',
+                        order = 4
+                    })
+                }
+            },
+            standByBehavior = {
+                type = "group",
+                inline = true,
+                order = 4,
+                name = "Stand-By Camera Distance",
+                args = {
+                    standByBehavior = {
+                        type = "select",
+                        name = "When Stand-By is activated",
+                        order = 1,
+                        values = {
+                            maxDistance = "Zoom to max distance",
+                            view = "Zoom to view",
+                            doNothing = "Do Nothing"
+                        },
+                        desc = "Indicates if the camera should zoom to the max camera distance when Auto-Camera is on stand-by"
+                    },
+                    spacer = {
+                        type = "header",
+                        name = "Stand-By Views",
+                        order = 2,
+                        hidden = function() return settings.standByBehavior ~= "view" end
+                    },
+                    manualStandByView = merge(viewOption(), {
+                        name = 'Manual Stand-By View',
+                        desc = 'The camera view to go to when toggling Auto-Camera off',
+                        hidden = function() return settings.standByBehavior ~= "view" end
+                    }),
+                    instanceEncounterView = merge(viewOption(), {
+                        name = 'Instance Encounter View',
+                        desc = 'The camera view to go to during an encounter (e.g. boss battle)',
+                        hidden = function() return settings.standByBehavior ~= "view" end
+                    }),
+                    petBattleView = merge(viewOption(), {
+                        name = 'Pet Battle View',
+                        desc = 'The camera view to go to during a pet battle.',
+                        hidden = function() return settings.standByBehavior ~= "view" end
+                    })
+                }
+            },
+            toggleDefaults = {
+                type = "execute",
+                name = function()
+                    if (prevSettings == nil) then
+                        return "Defaults"
+                    else
+                        return "Undo"
+                    end
+                end,
+                func = function() addon:toggleDefaults() end,
+                order = 100
             }
         }
     }
 
-    local standingDistances = options.args.general.args.standingDistances
+    -- standing distances
+    local standingDistances = options.args.standingDistances
     for race in pairs(races) do
         standingDistances.args[standingArgKey(race)] = merge(distanceOption(), {
             name = race,
@@ -340,7 +381,7 @@ function addon:options()
     local playerStandingArgKey = playerRace:gsub("^.", string.lower):gsub(" ", "") .. 'Distance'
     standingDistances.args[playerStandingArgKey].order = 1
     if (playerRace == "Worgen") then
-        options.args.general.args.standingDistances.args.humanDistance.order = 2
+        options.args.standingDistances.args.humanDistance.order = 2
     end
     return options
 end
@@ -352,10 +393,14 @@ local colorEnd = "\124r"
 SLASH_AC1 = "/ac"
 SlashCmdList["AC"] = function(arg)
     if arg == "toggle" then
-        addon:toggleAutoCamera()
+        addon:toggleStandBy()
+    elseif (arg == "settings") then
+        InterfaceOptionsFrame_Show()
+        InterfaceOptionsFrame_OpenToCategory("Auto-Camera")
     else
         print(colorStart .. yellow .. "Auto-Camera console commands:" .. colorEnd)
-        print("/ac toggle    " .. colorStart .. yellow .. "toggles Auto-Camera on/off" .. colorEnd)
+        print("/ac toggle    " .. colorStart .. yellow .. "toggles stand-by mode on/off" .. colorEnd)
+        print("/ac settings    " .. colorStart .. yellow .. "opens Auto-Camera settings" .. colorEnd)
     end
 end
 
