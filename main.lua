@@ -339,7 +339,6 @@ function addon:options()
                         name = "When Stand-By is activated",
                         order = 1,
                         values = {
-                            maxDistance = "Zoom to max distance",
                             view = "Zoom to view",
                             doNothing = "Do Nothing"
                         },
@@ -396,6 +395,12 @@ function addon:options()
     if (playerRace == "Worgen") then
         options.args.standingDistances.args.humanDistance.order = 2
     end
+
+    -- stand by behavior
+    if (xpac >= xpacs.sl) then
+        options.args.standByBehavior.args.standByBehavior.values.maxDistance = "Zoom to max distance"
+    end
+
     return options
 end
 
