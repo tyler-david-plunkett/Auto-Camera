@@ -13,6 +13,8 @@ local playerRace = UnitRace("player")
 local showOtherRaces = false
 local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
 races[playerRace] = true -- adds player race if it's missing from race set
+local maxZoomDistance = 50
+
 local defaults = {
     global = {
         standByOnLoad = false,
@@ -24,7 +26,7 @@ local defaults = {
         normalEnemyDistance = 4,
         eliteEnemyDistance = 4,
         raidEnemyDistance = 8,
-        bossEnemyDistance = 50
+        bossEnemyDistance = maxZoomDistance
     }
 }
 
@@ -188,19 +190,19 @@ function addon:autoZoom()
             if (settings.standByBehavior == "view") then
                 SetView(settings.manualStandByView)
             elseif (settings.standByBehavior == "maxDistance") then
-                CameraZoomOut(30)
+                CameraZoomOut(maxZoomDistance)
             end
         elseif IN_ENCOUNTER then
             if (settings.standByBehavior == "view") then
                 SetView(settings.instanceEncounterView)
             elseif (settings.standByBehavior == "maxDistance") then
-                CameraZoomOut(30)
+                CameraZoomOut(3maxZoomDistance0)
             end
         elseif IN_PET_BATTLE then
             if (settings.standByBehavior == "view") then
                 SetView(settings.petBattleView)
             elseif (settings.standByBehavior == "maxDistance") then
-                CameraZoomOut(30)
+                CameraZoomOut(maxZoomDistance)
             end
         end
     end
@@ -221,7 +223,7 @@ function distanceOption()
     return {
         type = 'range',
         min = 0,
-        max = 30,
+        max = maxZoomDistance,
         step = 0.1,
         order = 3
     }
