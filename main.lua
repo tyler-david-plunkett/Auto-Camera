@@ -196,7 +196,7 @@ function addon:autoZoom()
             if (settings.standByBehavior == "view") then
                 SetView(settings.instanceEncounterView)
             elseif (settings.standByBehavior == "maxDistance") then
-                CameraZoomOut(3maxZoomDistance0)
+                CameraZoomOut(maxZoomDistance)
             end
         elseif IN_PET_BATTLE then
             if (settings.standByBehavior == "view") then
