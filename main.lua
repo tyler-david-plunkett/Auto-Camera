@@ -109,9 +109,8 @@ function addon:OnInitialize()
     local options = addon:options()
     addon.db = LibStub("AceDB-3.0"):New("AutoCameraDB", defaultSettings, true)
     addon:loadSettings()
-    LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options, nil)
+    LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
-    options.args.globals = LibStub("AceDBOptions-3.0"):GetOptionsTable(addon.db)
     STAND_BY = settings.standByOnLoad
     if (not STAND_BY) then
         addon:autoZoom()
