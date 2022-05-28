@@ -35,6 +35,7 @@ local defaults = {
         petBattleView = 5,
         instanceEncounterView = 5,
         ridingDistance = 8.5,
+        speedMultiplier = 0.2,
         normalEnemyDistance = 4,
         eliteEnemyDistance = 4,
         raidEnemyDistance = 8,
@@ -146,6 +147,7 @@ function addon:autoZoom()
     local currentCameraZoom = GetCameraZoom()
     local unit
     local enemyCount = 0
+    local currentSpeed, runSpeed, flightSpeed, swimSpeed = GetUnitSpeed("player")
 
     targetZoom = settings[playerStandingArgKey]
     if (playerRace == "Worgen" and not isWorgenForm()) then
@@ -158,6 +160,8 @@ function addon:autoZoom()
     ) then
         targetZoom = settings.ridingDistance
     end
+
+    targetZoom = targetZoom + currentSpeed * settings.speedMultiplier
 
     local enemyPackDistance = targetZoom
     for i, unit in ipairs(units) do
@@ -306,25 +310,33 @@ function addon:options()
                         desc = 'Camera distance when riding on a mount or in a vehicle',
                         order = 1
                     }),
+                    speedMultiplier = {
+                        type = 'range',
+                        name = 'Movement Multiplier',
+                        min = 0,
+                        max = 0.5,
+                        step = 0.1,
+                        order = 2
+                    },
                     normalEnemyDistance = merge(distanceOption(), {
                         name = 'Per Normal Enemy',
                         desc = 'Distance to add per normal enemy on screen near the player character',
-                        order = 2
+                        order = 3
                     }),
                     eliteEnemyDistance = merge(distanceOption(), {
                         name = 'Per Elite Enemy',
                         desc = 'Distance to add per elite enemy on screen near the player character',
-                        order = 3
+                        order = 4
                     }),
                     raidEnemyDistance = merge(distanceOption(), {
                         name = 'Per Raid Enemy',
                         desc = 'Distance to add per raid enemy on screen near the player character',
-                        order = 8
+                        order = 5,
                     }),
                     bossEnemyDistance = merge(distanceOption(), {
                         name = 'Per Boss Enemy',
                         desc = 'Distance to add per boss enemy on screen near the player character',
-                        order = 4
+                        order = 6
                     })
                 }
             },
