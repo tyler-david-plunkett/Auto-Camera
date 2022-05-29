@@ -277,6 +277,19 @@ function addon:options()
                         name = "Load in stand-by",
                         desc = "Controls if automatic camera zooming should be on stand-by on load"
                     },
+                    standByKeybinding = {
+                        type = "keybinding",
+                        name = "Toggle Stand-By Mode",
+                        desc = "Keybinding to toggle Stand-By Mode",
+                        get = function()
+                            return GetBindingKey("TOGGLE_STAND_BY")
+                        end,
+                        set = function(info, value)
+                            SetBinding(GetBindingKey("TOGGLE_STAND_BY")) -- unbind current key
+                            SetBinding(value, "TOGGLE_STAND_BY") -- bind toggle to entered key
+                            SaveBindings(2)
+                        end
+                    },
                 }
             },
             standingDistances = {
