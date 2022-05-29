@@ -101,7 +101,7 @@ for i = 1, 10 do
 end
 
 BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
-BINDING_NAME_TOGGLE_STAND_BY = "Toggle Stand-By mode"
+BINDING_NAME_TOGGLE_STAND_BY = "Toggle Stand-By Mode"
 
 function addon:isRunning() 
     return 
@@ -274,7 +274,7 @@ function addon:options()
                 args = {
                     standByOnLoad = {
                         type = "toggle",
-                        name = "Start on stand-by",
+                        name = "Load in stand-by",
                         desc = "Controls if automatic camera zooming should be on stand-by on load"
                     },
                 }
