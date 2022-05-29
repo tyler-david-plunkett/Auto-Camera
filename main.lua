@@ -285,7 +285,10 @@ function addon:options()
                             return GetBindingKey("TOGGLE_STAND_BY")
                         end,
                         set = function(info, value)
-                            SetBinding(GetBindingKey("TOGGLE_STAND_BY")) -- unbind current key
+                            local toggleStandByKey = GetBindingKey("TOGGLE_STAND_BY")
+                            if (toggleStandByKey) then
+                                SetBinding(toggleStandByKey) -- unbind current key
+                            end
                             SetBinding(value, "TOGGLE_STAND_BY") -- bind toggle to entered key
                             SaveBindings(2)
                         end
