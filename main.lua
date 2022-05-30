@@ -142,6 +142,17 @@ function addon:toggleStandBy()
     end
 end
 
+function addon:enterStandBy()
+    STAND_BY = true
+end
+
+function addon:exitStandBy()
+    STAND_BY = false
+    if addon:isRunning() then
+        addon:autoZoom()
+    end
+end
+
 function addon:autoZoom()
     local targetZoom
     local currentCameraZoom = GetCameraZoom()
@@ -454,12 +465,18 @@ SLASH_AC1 = "/ac"
 SlashCmdList["AC"] = function(arg)
     if arg == "toggle" then
         addon:toggleStandBy()
+    elseif (arg == "standby") then
+        addon:enterStandBy()
+    elseif (arg == "resume") then
+        addon:exitStandBy()
     elseif (arg == "settings") then
         InterfaceOptionsFrame_Show()
         InterfaceOptionsFrame_OpenToCategory("Auto-Camera")
     else
         print(colorStart .. yellow .. "Auto-Camera console commands:" .. colorEnd)
         print("/ac toggle    " .. colorStart .. yellow .. "toggles stand-by mode on/off" .. colorEnd)
+        print("/ac standby    " .. colorStart .. yellow .. "enters stand-by mode" .. colorEnd)
+        print("/ac resume    " .. colorStart .. yellow .. "exits stand-by mode" .. colorEnd)
         print("/ac settings    " .. colorStart .. yellow .. "opens Auto-Camera settings" .. colorEnd)
     end
 end
