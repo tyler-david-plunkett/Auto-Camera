@@ -1,5 +1,6 @@
 #!/bin/bash
 
+[ -d "libs" ] && rm -r libs
 mkdir libs
 curl -L https://www.wowace.com/projects/ace3/files/latest -o Ace3.zip
 
