@@ -474,9 +474,9 @@ SlashCmdList["AC"] = function(arg)
         InterfaceOptionsFrame_OpenToCategory("Auto-Camera")
     else
         print(colorStart .. yellow .. "Auto-Camera console commands:" .. colorEnd)
-        print("/ac toggle    " .. colorStart .. yellow .. "toggles stand-by mode on/off" .. colorEnd)
+        print("/ac toggle       " .. colorStart .. yellow .. "toggles stand-by mode on/off" .. colorEnd)
         print("/ac standby    " .. colorStart .. yellow .. "enters stand-by mode" .. colorEnd)
-        print("/ac resume    " .. colorStart .. yellow .. "exits stand-by mode" .. colorEnd)
+        print("/ac resume     " .. colorStart .. yellow .. "exits stand-by mode" .. colorEnd)
         print("/ac settings    " .. colorStart .. yellow .. "opens Auto-Camera settings" .. colorEnd)
     end
 end
