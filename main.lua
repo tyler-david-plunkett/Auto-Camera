@@ -270,16 +270,29 @@ function addon:options()
                 type = "group",
                 inline = true,
                 order = 1,
-                name = "Control",
+                name = "Stand-By Mode",
                 args = {
+                    toggleStandBy = {
+                        type = "execute",
+                        name = function()
+                            if (STAND_BY) then
+                                return "Exit Stand-By"
+                            else
+                                return "Enter Stand-By"
+                            end
+                        end,
+                        func = function() addon:toggleStandBy() end,
+                        order = 1
+                    },
                     standByOnLoad = {
                         type = "toggle",
-                        name = "Load in stand-by",
-                        desc = "Controls if automatic camera zooming should be on stand-by on load"
+                        name = "Load In Stand-By",
+                        desc = "Controls if automatic camera zooming should be on stand-by on load",
+                        order = 2
                     },
                     standByKeybinding = {
                         type = "keybinding",
-                        name = "Toggle Stand-By Mode",
+                        name = "Toggle Key Binding",
                         desc = "Keybinding to toggle Stand-By Mode",
                         get = function()
                             return GetBindingKey("TOGGLE_STAND_BY")
@@ -291,7 +304,8 @@ function addon:options()
                             end
                             SetBinding(value, "TOGGLE_STAND_BY") -- bind toggle to entered key
                             SaveBindings(2)
-                        end
+                        end,
+                        order = 3
                     },
                 }
             },
