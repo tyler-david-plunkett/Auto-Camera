@@ -140,6 +140,7 @@ function addon:toggleStandBy()
     else
         STAND_BY = true
     end
+    LibStub("AceConfigRegistry-3.0"):NotifyChange("Auto-Camera")
 end
 
 function addon:enterStandBy()
