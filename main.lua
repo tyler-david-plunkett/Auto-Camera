@@ -278,7 +278,7 @@ function addon:options()
         end,
         get = function(info) return settings[info[#info]] end,
         args = {
-            control = {
+            standBy = {
                 type = "group",
                 inline = true,
                 order = 1,
@@ -319,6 +319,40 @@ function addon:options()
                         end,
                         order = 3
                     },
+                    standByBehavior = {
+                        type = "select",
+                        name = "When Stand-By is activated",
+                        order = 4,
+                        values = {
+                            view = "Zoom to view",
+                            doNothing = "Do Nothing"
+                        },
+                        desc = "Indicates if the camera should zoom to the max camera distance when Auto-Camera is on stand-by"
+                    },
+                    spacer = {
+                        type = "header",
+                        name = "Stand-By Views",
+                        order = 5,
+                        hidden = function() return settings.standByBehavior ~= "view" end
+                    },
+                    manualStandByView = merge(viewOption(), {
+                        name = 'Manual Stand-By View',
+                        desc = 'The camera view to go to when toggling Auto-Camera off',
+                        order = 6,
+                        hidden = function() return settings.standByBehavior ~= "view" end
+                    }),
+                    instanceEncounterView = merge(viewOption(), {
+                        name = 'Instance Encounter View',
+                        desc = 'The camera view to go to during an encounter (e.g. boss battle)',
+                        order = 7,
+                        hidden = function() return settings.standByBehavior ~= "view" end
+                    }),
+                    petBattleView = merge(viewOption(), {
+                        name = 'Pet Battle View',
+                        desc = 'The camera view to go to during a pet battle.',
+                        order = 8,
+                        hidden = function() return settings.standByBehavior ~= "view" end
+                    })
                 }
             },
             standingDistances = {
@@ -382,45 +416,6 @@ function addon:options()
                     })
                 }
             },
-            standByBehavior = {
-                type = "group",
-                inline = true,
-                order = 4,
-                name = "Stand-By Camera Distance",
-                args = {
-                    standByBehavior = {
-                        type = "select",
-                        name = "When Stand-By is activated",
-                        order = 1,
-                        values = {
-                            view = "Zoom to view",
-                            doNothing = "Do Nothing"
-                        },
-                        desc = "Indicates if the camera should zoom to the max camera distance when Auto-Camera is on stand-by"
-                    },
-                    spacer = {
-                        type = "header",
-                        name = "Stand-By Views",
-                        order = 2,
-                        hidden = function() return settings.standByBehavior ~= "view" end
-                    },
-                    manualStandByView = merge(viewOption(), {
-                        name = 'Manual Stand-By View',
-                        desc = 'The camera view to go to when toggling Auto-Camera off',
-                        hidden = function() return settings.standByBehavior ~= "view" end
-                    }),
-                    instanceEncounterView = merge(viewOption(), {
-                        name = 'Instance Encounter View',
-                        desc = 'The camera view to go to during an encounter (e.g. boss battle)',
-                        hidden = function() return settings.standByBehavior ~= "view" end
-                    }),
-                    petBattleView = merge(viewOption(), {
-                        name = 'Pet Battle View',
-                        desc = 'The camera view to go to during a pet battle.',
-                        hidden = function() return settings.standByBehavior ~= "view" end
-                    })
-                }
-            },
             toggleDefaults = {
                 type = "execute",
                 name = function()
@@ -452,7 +447,7 @@ function addon:options()
 
     -- stand by behavior
     if (xpac >= xpacs.sl) then
-        options.args.standByBehavior.args.standByBehavior.values.maxDistance = "Zoom to max distance"
+        options.args.standBy.args.standByBehavior.values.maxDistance = "Zoom to max distance"
     end
 
     return options
