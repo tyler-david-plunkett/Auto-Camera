@@ -4,6 +4,7 @@ local addon = AutoCamera
 local STAND_BY = false
 local IN_PET_BATTLE = false
 local IN_ENCOUNTER = false
+local IN_BARBER_SHOP = false
 local IN_RAID = false
 local IN_DUNGEON = false
 local previousCameraZoom = GetCameraZoom()
@@ -107,7 +108,8 @@ function addon:isRunning()
     return 
         not STAND_BY and
         not IN_ENCOUNTER and
-        not IN_PET_BATTLE
+        not IN_PET_BATTLE and
+        not IN_BARBER_SHOP
 end
 
 function addon:loadSettings()
@@ -515,10 +517,24 @@ function addon:PLAYER_ENTERING_WORLD()
     end
 end
 
+function addon:BARBER_SHOP_OPEN()
+    IN_BARBER_SHOP = true
+end
+
+function addon:BARBER_SHOP_CLOSE()
+    IN_BARBER_SHOP = false
+
+    if (addon:isRunning()) then
+        addon:autoZoom()
+    end
+end
+
 local f = CreateFrame("Frame")
 f:RegisterEvent("PET_BATTLE_OPENING_START")
 f:RegisterEvent("PET_BATTLE_CLOSE")
 f:RegisterEvent("ENCOUNTER_START")
 f:RegisterEvent("ENCOUNTER_END")
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
+f:RegisterEvent("BARBER_SHOP_OPEN")
+f:RegisterEvent("BARBER_SHOP_CLOSE")
 f:SetScript("OnEvent", OnEvent)
