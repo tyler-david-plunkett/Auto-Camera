@@ -33,3 +33,15 @@ end
 function camelCase(str)
     return str:gsub("^.", string.lower):gsub(" ", "")
 end
+
+function splitCamelCase(str)
+	return str:gsub("%u", " %1")
+end
+
+function capitalize(str)
+    return str:gsub("^%l", string.upper)
+end
+
+function unCapitalize(str)
+    return str:gsub("^%u", string.lower)
+end
