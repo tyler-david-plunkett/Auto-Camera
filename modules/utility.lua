@@ -25,8 +25,27 @@ function set (list)
     return set
 end
 
-function merge(target, source)
-    for key, value in pairs(source) do target[key] = value end
+function merge(target, source, prune)
+    if (prune == nil) then prune = false end
+    for key, value in pairs(source) do
+        if (not prune or target[key] ~= nil) then
+            target[key] = value
+        end
+    end
+    return target
+end
+
+function deepMerge(target, source, prune)
+    if (prune == nil) then prune = false end
+    for key, value in pairs(source) do
+        if (not prune or target[key] ~= nil) then
+            if (type(value) == "table") then
+                target[key] = deepMerge(target[key] or {}, value)
+            else
+                target[key] = value
+            end
+        end
+    end
     return target
 end
 
