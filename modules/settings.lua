@@ -21,8 +21,14 @@ defaultSettings = {
 settingsUpdateMap = {}
 
 settingsUpdateMap['0.2.0'] = function(settings)
-  return {
-    version = '0.2.0',
-    general = deepCopy(settings)
-  }
+  -- copy root as general
+  local general = deepCopy(settings)
+
+  -- empty table
+  for key in pairs(settings) do
+    settings[key] = nil
+  end
+
+  settings.general = general
+  settings.version = '0.2.0'
 end

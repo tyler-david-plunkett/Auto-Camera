@@ -116,24 +116,21 @@ function addon:loadSettings()
 
     -- update settings if necessary
     if (settings.version ~= version) then
-        settings = addon:updateSettings(settings)
+        addon:updateSettings(settings)
     end
 
-    settings = deepMerge(deepCopy(defaultSettings), settings, true)
+    deepMerge(settings, deepMerge(deepCopy(defaultSettings), settings, true))
 end
 
 function addon:updateSettings(settings)
-    local updatedSettings = deepCopy(settings)
-    
     for updateVersion, updateFunction in pairs(settingsUpdateMap) do
-        if (updateVersion > updatedSettings.version) then
-            updatedSettings = updateFunction(updatedSettings)
-            updatedSettings.version = updateVersion
+        if (updateVersion > settings.version) then
+            updateFunction(settings)
         end
     end
 
-    updatedSettings.version = version
-    return updatedSettings
+    settings.version = version
+    return settings
 end
 
 -- addon hook callback functions
