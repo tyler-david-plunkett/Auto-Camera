@@ -580,6 +580,7 @@ function addon:options()
                     end
 
                     C_CVar.SetCVar(CVar, value)
+                    settings.actionCam[CVar] = value
                 end,
             },
             actionCamArgs[groupName].args[var] or {}
