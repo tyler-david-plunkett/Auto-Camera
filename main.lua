@@ -36,9 +36,22 @@ for key, command in pairs(C_Console.GetAllCommands()) do
         table.insert(actionCamCVars, command.command)
     end
 end
+
 for index, CVar in pairs(actionCamCVars) do
     defaultSettings.actionCam[CVar] = C_CVar.GetCVarDefault(CVar)
 end
+
+actionCamCommandOptions = {
+    general = {
+        "full", "basic", "off", "on", "default"
+    },
+    headMovement = {
+        "heavyHeadMove", "noHeadMove", "lowHeadMove", "headMove"
+    },
+    targetFocus = {
+        "focusAll", "focusEnemy", "focusInteract", "focusOff"
+    }
+}
 
 function standingArgKey(race)
     return camelCase(race) .. 'Distance'
@@ -149,9 +162,7 @@ function addon:OnInitialize()
     end
 
     -- apply actionCam settings
-    for index, CVar in pairs(actionCamCVars) do
-        C_CVar.SetCVar(CVar, settings.actionCam[CVar])
-    end
+    addon:applyActionCamSettings()
 
     if (not STAND_BY) then
         addon:autoZoom()
@@ -262,6 +273,18 @@ function addon:autoZoom()
     end
 
     previousCameraZoom = currentCameraZoom
+end
+
+function addon:applyActionCamSettings() 
+    for index, CVar in pairs(actionCamCVars) do
+        C_CVar.SetCVar(CVar, settings.actionCam[CVar])
+    end
+end
+
+function addon:storeActionCamSettings() 
+    for index, CVar in pairs(actionCamCVars) do
+        settings.actionCam[CVar] = C_CVar.GetCVar(CVar, settings.actionCam[CVar])
+    end
 end
 
 function viewOption()
@@ -524,6 +547,9 @@ function addon:options()
                             }
                         }
                     },
+                    presets = {
+                        args = {}
+                    },
                     toggleDefaults = {
                         type = "execute",
                         name = function()
@@ -543,6 +569,35 @@ function addon:options()
     
     -- actionCam
     local actionCamArgs = options.args.actionCam.args
+
+    local actionCamPresetDefaults = {
+        type = "group",
+        name = "Presets",
+        inline = true,
+        args = {}
+    }
+
+    for groupName, group in pairs(actionCamCommandOptions) do
+        actionCamArgs.presets.args[groupName] = {
+            type = "group",
+            inline = true,
+            name = capitalize(splitCamelCase(groupName)),
+            args = {}
+        }
+
+        for index, preset in pairs(group) do
+            actionCamArgs.presets.args[groupName].args[preset] = {
+                type = "execute",
+                name = capitalize(splitCamelCase(preset)),
+                func = function()
+                    ConsoleExec("ActionCam " .. preset)
+                    addon:storeActionCamSettings()
+                end
+            }
+        end
+    end
+
+    deepMerge(actionCamArgs.presets, deepMerge(actionCamPresetDefaults, actionCamArgs.presets))
 
     for index, cVar in pairs(actionCamCVars) do
         local groupName = nil
