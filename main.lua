@@ -9,8 +9,7 @@ local IN_RAID = false
 local IN_DUNGEON = false
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
-local prevGeneralSettings = nil
-local prevActionCamSettings = nil
+local previousSettings = {general = nil, actionCam = nil} -- stores the previous settings when defaults are applied by the user
 local playerRace = UnitRace("player")
 local showOtherRaces = false
 local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
@@ -307,22 +306,22 @@ function distanceOption()
 end
 
 function addon:toggleGeneralDefaults()
-    if (prevGeneralSettings == nil) then 
-        prevGeneralSettings = deepCopy(settings.general)
+    if (previousSettings.general == nil) then
+        previousSettings.general = deepCopy(settings.general)
         deepMerge(settings.general, defaultSettings)
     else
-        deepMerge(settings.general, prevGeneralSettings)
-        prevGeneralSettings = nil
+        deepMerge(settings.general, previousSettings.general)
+        previousSettings.general = nil
     end
 end
 
 function addon:toggleActionCamDefaults()
-    if (prevActionCamSettings == nil) then 
-        prevActionCamSettings = deepCopy(settings.actionCam)
+    if (previousSettings.actionCam == nil) then
+        previousSettings.actionCam = deepCopy(settings.actionCam)
         deepMerge(settings.actionCam, defaultSettings.actionCam)
     else
-        deepMerge(settings.actionCam, prevActionCamSettings)
-        prevActionCamSettings = nil
+        deepMerge(settings.actionCam, previousSettings.actionCam)
+        previousSettings.actionCam = nil
     end
 end
 
@@ -338,7 +337,7 @@ function addon:options()
                 name = 'General',
                 order = 1,
                 set = function(info, value)
-                    prevGeneralSettings = nil
+                    previousSettings.general = nil
                     settings.general[info[#info]] = value
                 end,
                 get = function(info) return settings.general[info[#info]] end,
@@ -484,7 +483,7 @@ function addon:options()
                     toggleDefaults = {
                         type = "execute",
                         name = function()
-                            if (prevGeneralSettings == nil) then
+                            if (previousSettings.general == nil) then
                                 return "Defaults"
                             else
                                 return "Undo"
@@ -500,7 +499,7 @@ function addon:options()
                 name = 'ActionCam',
                 order = 2,
                 set = function(info, value)
-                    prevActionCamSettings = nil
+                    previousSettings.actionCam = nil
                     settings.actionCam[info[#info]] = value
                 end,
                 get = function(info) return settings.actionCam[info[#info]] end,
@@ -553,7 +552,7 @@ function addon:options()
                     toggleDefaults = {
                         type = "execute",
                         name = function()
-                            if (prevActionCamSettings == nil) then
+                            if (previousSettings.actionCam == nil) then
                                 return "Defaults"
                             else
                                 return "Undo"
