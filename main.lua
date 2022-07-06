@@ -308,7 +308,7 @@ end
 function addon:toggleGeneralDefaults()
     if (previousSettings.general == nil) then
         previousSettings.general = deepCopy(settings.general)
-        deepMerge(settings.general, defaultSettings)
+        deepMerge(settings.general, defaultSettings.general)
     else
         deepMerge(settings.general, previousSettings.general)
         previousSettings.general = nil
