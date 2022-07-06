@@ -323,6 +323,7 @@ function addon:toggleActionCamDefaults()
         deepMerge(settings.actionCam, previousSettings.actionCam)
         previousSettings.actionCam = nil
     end
+    addon.applyActionCamSettings()
 end
 
 -- options
