@@ -547,9 +547,6 @@ function addon:options()
                             }
                         }
                     },
-                    presets = {
-                        args = {}
-                    },
                     toggleDefaults = {
                         type = "execute",
                         name = function()
@@ -560,8 +557,13 @@ function addon:options()
                             end
                         end,
                         func = function() addon:toggleActionCamDefaults() end,
-                        order = 100
-                    }
+                        order = 99
+                    },
+                    -- todo: remove commands?
+                    commands = {
+                        order = 100,
+                        args = {}
+                    },
                 }
             }
         }
@@ -572,13 +574,13 @@ function addon:options()
 
     local actionCamPresetDefaults = {
         type = "group",
-        name = "Presets",
+        name = "Commands",
         inline = true,
         args = {}
     }
 
     for groupName, group in pairs(actionCamCommandOptions) do
-        actionCamArgs.presets.args[groupName] = {
+        actionCamArgs.commands.args[groupName] = {
             type = "group",
             inline = true,
             name = capitalize(splitCamelCase(groupName)),
@@ -586,7 +588,7 @@ function addon:options()
         }
 
         for index, preset in pairs(group) do
-            actionCamArgs.presets.args[groupName].args[preset] = {
+            actionCamArgs.commands.args[groupName].args[preset] = {
                 type = "execute",
                 name = capitalize(splitCamelCase(preset)),
                 func = function()
@@ -597,7 +599,7 @@ function addon:options()
         end
     end
 
-    deepMerge(actionCamArgs.presets, deepMerge(actionCamPresetDefaults, actionCamArgs.presets))
+    deepMerge(actionCamArgs.commands, deepMerge(actionCamPresetDefaults, actionCamArgs.commands))
 
     for index, cVar in pairs(actionCamCVars) do
         local groupName = nil
