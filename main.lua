@@ -28,6 +28,11 @@ local xpacs = {
     sl = 9
 }
 local actionCamCVars = {} -- populated on VARIABLES_LOADED event
+local motionSicknessSettingValues = {}
+motionSicknessSettingValues[1] = "Keep Character Centered"
+motionSicknessSettingValues[2] = "Reduce Camera Motion"
+motionSicknessSettingValues[3] = "Keep Character Centered and Reduce Camera Motion"
+motionSicknessSettingValues[0] = "Allow Dynamic Camera Movement"
 
 -- todo> move loops?
 for key, command in pairs(C_Console.GetAllCommands()) do
@@ -327,6 +332,10 @@ function addon:toggleActionCamDefaults()
     addon.applyActionCamSettings()
 end
 
+function addon:dynamicCameraMovementIsAllowed()
+    return C_CVar.GetCVar("CameraKeepCharacterCentered") == "0" and C_CVar.GetCVar("CameraReduceUnexpectedMovement") == "0"
+end
+
 -- options
 function addon:options()
     local options = {
@@ -506,23 +515,45 @@ function addon:options()
                 end,
                 get = function(info) return settings.actionCam[info[#info]] end,
                 args = {
-                    -- todo> accessibility setting to enable actioncam
                     general = {
                         type = "group",
                         inline = true,
                         order = 1,
                         name = "General",
                         args = {
-                            suppressExperimentalCVarPrompt = { -- todo> should this be done differently?
-                                type = "toggle",
+                            motionSickness = {
+                                name = "Motion Sickness",
+                                type = "select",
                                 order = 1,
+                                values = motionSicknessSettingValues,
+                                width = "normal",
+                                desc = "This accessibility setting and more can be found in Game Menu > Interface > Accessibility",
+                                set = function(info, value)
+                                    print(value)
+                                    SetCVar("CameraKeepCharacterCentered", (value == 1 or value == 3) and "1" or "0")
+                                    SetCVar("CameraReduceUnexpectedMovement", (value == 2 or value == 3) and "1" or "0")
+                                end,
+                                get = function()
+                                    -- print(GetCVar("CameraKeepCharacterCentered"), GetCVar("CameraReduceUnexpectedMovement"))
+                                    return ((GetCVar("CameraKeepCharacterCentered") == "1" and 1 or 0) + (GetCVar("CameraReduceUnexpectedMovement") == "1" and 2 or 0))
+                                end
+                            },
+                            suppressExperimentalCVarPrompt = {
+                                type = "toggle",
+                                order = 2,
                                 name = "Suppress Expirimental CVar Prompt"
                             }
                         }
                     },
+                    motionSicknessMessage = {
+                        type = "description",
+                        hidden = function() return not addon:dynamicCameraMovementIsAllowed() end,
+                        name = "You must Allow Dynamic Camera Moving in the acccessibility setting above before you can enable ActionCam"
+                    },
                     dynamicPitch = {
                         type = "group",
                         name = "Dynamic Pitch",
+                        hidden = function() return addon:dynamicCameraMovementIsAllowed() end,
                         inline = true,
                         order = 2,
                         args = {}
@@ -530,6 +561,7 @@ function addon:options()
                     headMovement = {
                         type = "group",
                         name = "Head Movement",
+                        hidden = function() return addon:dynamicCameraMovementIsAllowed() end,
                         inline = true,
                         order = 3,
                         args = {}
@@ -537,6 +569,7 @@ function addon:options()
                     targetFocus = {
                         type = "group",
                         name = "Target Focus",
+                        hidden = function() return addon:dynamicCameraMovementIsAllowed() end,
                         inline = true,
                         order = 4,
                         args = {
@@ -557,6 +590,7 @@ function addon:options()
                                 return "Undo"
                             end
                         end,
+                        hidden = function() return addon:dynamicCameraMovementIsAllowed() end,
                         func = function() addon:toggleActionCamDefaults() end,
                         order = 99
                     }
