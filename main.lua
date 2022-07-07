@@ -126,6 +126,7 @@ function addon:loadSettings()
     -- assume earliest version
     settings.version = settings.version or "0.0.0"
 
+    -- todo: test settings update
     -- update settings if necessary
     if (settings.version ~= version) then
         addon:updateSettings(settings)
@@ -506,11 +507,11 @@ function addon:options()
                 get = function(info) return settings.actionCam[info[#info]] end,
                 args = {
                     -- todo> accessibility setting to enable actioncam
-                    miscellaneous = {
+                    general = {
                         type = "group",
                         inline = true,
                         order = 1,
-                        name = "Miscellaneous",
+                        name = "General",
                         args = {
                             suppressExperimentalCVarPrompt = { -- todo> should this be done differently?
                                 type = "toggle",
@@ -558,49 +559,15 @@ function addon:options()
                         end,
                         func = function() addon:toggleActionCamDefaults() end,
                         order = 99
-                    },
-                    -- todo: remove commands?
-                    commands = {
-                        order = 100,
-                        args = {}
-                    },
+                    }
                 }
             }
         }
     }
     
-    -- actionCam
     local actionCamArgs = options.args.actionCam.args
 
-    local actionCamPresetDefaults = {
-        type = "group",
-        name = "Commands",
-        inline = true,
-        args = {}
-    }
-
-    for groupName, group in pairs(actionCamCommandOptions) do
-        actionCamArgs.commands.args[groupName] = {
-            type = "group",
-            inline = true,
-            name = capitalize(splitCamelCase(groupName)),
-            args = {}
-        }
-
-        for index, preset in pairs(group) do
-            actionCamArgs.commands.args[groupName].args[preset] = {
-                type = "execute",
-                name = capitalize(splitCamelCase(preset)),
-                func = function()
-                    ConsoleExec("ActionCam " .. preset)
-                    addon:storeActionCamSettings()
-                end
-            }
-        end
-    end
-
-    deepMerge(actionCamArgs.commands, deepMerge(actionCamPresetDefaults, actionCamArgs.commands))
-
+    -- actionCam CVars
     for index, cVar in pairs(actionCamCVars) do
         local groupName = nil
         for group, setting in pairs(actionCamArgs) do
@@ -611,7 +578,7 @@ function addon:options()
         end
 
         if (groupName == nil) then
-            groupName = "miscellaneous"
+            groupName = "general"
         end
 
         local var = unCapitalize(cVar:gsub("test_camera", ""):gsub(capitalize(groupName), ""))
@@ -620,8 +587,9 @@ function addon:options()
             {
                 name = name,
                 type = "input",
+                order = 50,
                 get = function(info)
-                    local CVar = 'test_camera' .. capitalize(groupName:gsub("miscellaneous", "")) .. capitalize(info[#info])
+                    local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(info[#info])
 
                     if (info.type == 'toggle') then
                         return C_CVar.GetCVar(CVar) == "1" and true or false
@@ -630,7 +598,7 @@ function addon:options()
                      end
                 end,
                 set = function(info, value)
-                    local CVar = 'test_camera' .. capitalize(groupName:gsub("miscellaneous", "")) .. capitalize(info[#info])
+                    local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(info[#info])
                     
                     if (type(value) == 'boolean') then
                         value = value and 1 or 0 -- convert to string
@@ -642,6 +610,28 @@ function addon:options()
             },
             actionCamArgs[groupName].args[var] or {}
         )
+    end
+
+    -- actionCam commands
+    for groupName, group in pairs(actionCamCommandOptions) do
+        actionCamArgs[groupName].args.commands = {
+            type = "group",
+            name = "Commands",
+            inline = true,
+            order = 99,
+            args = {}
+        }
+
+        for index, command in pairs(group) do
+            actionCamArgs[groupName].args.commands.args[command] = {
+                type = "execute",
+                name = capitalize(splitCamelCase(command)),
+                func = function()
+                    ConsoleExec("ActionCam " .. command)
+                    addon:storeActionCamSettings()
+                end
+            }
+        end
     end
 
     -- standing distances
