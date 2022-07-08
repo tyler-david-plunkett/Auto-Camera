@@ -512,6 +512,7 @@ function addon:options()
             actionCam = {
                 type = 'group',
                 name = 'Action Cam',
+                desc = 'This is an experimental feature of the base game that pairs well with Auto-Camera. This tab simply provides a convenient interface for configuration.',
                 order = 2,
                 set = function(info, value)
                     previousSettings.actionCam = nil
