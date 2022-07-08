@@ -166,9 +166,6 @@ function addon:OnInitialize()
         UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED") -- todo> reenable?
     end
 
-    -- apply actionCam settings
-    addon:applyActionCamSettings() -- todo: necessary?
-
     if (not STAND_BY) then
         addon:autoZoom()
     end
@@ -332,12 +329,12 @@ function addon:toggleActionCamDefaults()
     addon.applyActionCamSettings()
 end
 
-function cameraCharacterCenteringEnabled()
+function addon:cameraCharacterCenteringEnabled()
     return C_CVar.GetCVar("CameraKeepCharacterCentered") == "1"
 end
 
-function cameraCharacterCenteringDisabled()
-    return not cameraCharacterCenteringEnabled()
+function addon:cameraCharacterCenteringDisabled()
+    return not addon.cameraCharacterCenteringEnabled()
 end
 
 -- options
@@ -536,6 +533,12 @@ function addon:options()
                                 set = function(info, value)
                                     SetCVar("CameraKeepCharacterCentered", (value == 1 or value == 3) and "1" or "0")
                                     SetCVar("CameraReduceUnexpectedMovement", (value == 2 or value == 3) and "1" or "0")
+
+                                    if (addon.cameraCharacterCenteringEnabled()) then
+                                        ConsoleExec("ActionCam off")
+                                    else
+                                        addon.applyActionCamSettings()
+                                    end
                                 end,
                                 get = function()
                                     return ((GetCVar("CameraKeepCharacterCentered") == "1" and 1 or 0) + (GetCVar("CameraReduceUnexpectedMovement") == "1" and 2 or 0))
@@ -545,6 +548,7 @@ function addon:options()
                                 type = "toggle",
                                 order = 2,
                                 width = "full",
+                                -- todo: add set
                                 name = "Suppress Expirimental Feature Prompt",
                                 desc = "This will remove the warning on load when Action Cam is enabled."
                             }
@@ -555,7 +559,7 @@ function addon:options()
                         name = "Action Cam Disabled",
                         order = 2,
                         inline = true,
-                        hidden = cameraCharacterCenteringDisabled,
+                        hidden = addon.cameraCharacterCenteringDisabled,
                         args = {
                             message1 = {
                                 type = "description",
@@ -579,7 +583,7 @@ function addon:options()
                     dynamicPitch = {
                         type = "group",
                         name = "Dynamic Pitch",
-                        hidden = cameraCharacterCenteringEnabled,
+                        hidden = addon.cameraCharacterCenteringEnabled,
                         inline = true,
                         order = 2,
                         args = {}
@@ -587,7 +591,7 @@ function addon:options()
                     headMovement = {
                         type = "group",
                         name = "Head Movement",
-                        hidden = cameraCharacterCenteringEnabled,
+                        hidden = addon.cameraCharacterCenteringEnabled,
                         inline = true,
                         order = 3,
                         args = {}
@@ -595,7 +599,7 @@ function addon:options()
                     targetFocus = {
                         type = "group",
                         name = "Target Focus",
-                        hidden = cameraCharacterCenteringEnabled,
+                        hidden = addon.cameraCharacterCenteringEnabled,
                         inline = true,
                         order = 4,
                         args = {
@@ -616,7 +620,7 @@ function addon:options()
                                 return "Undo"
                             end
                         end,
-                        hidden = cameraCharacterCenteringEnabled,
+                        hidden = addon.cameraCharacterCenteringEnabled,
                         func = function() addon:toggleActionCamDefaults() end,
                         order = 99
                     }
@@ -648,7 +652,7 @@ function addon:options()
                 name = name,
                 type = "input",
                 order = 50,
-                hidden = cameraCharacterCenteringEnabled,
+                hidden = addon.cameraCharacterCenteringEnabled,
                 get = function(info)
                     local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(info[#info])
 
@@ -679,7 +683,7 @@ function addon:options()
             type = "group",
             name = "Commands",
             inline = true,
-            hidden = cameraCharacterCenteringEnabled,
+            hidden = addon.cameraCharacterCenteringEnabled,
             order = 99,
             args = {}
         }
