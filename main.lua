@@ -167,7 +167,7 @@ function addon:OnInitialize()
     end
 
     -- apply actionCam settings
-    addon:applyActionCamSettings()
+    addon:applyActionCamSettings() -- todo: necessary?
 
     if (not STAND_BY) then
         addon:autoZoom()
@@ -332,8 +332,12 @@ function addon:toggleActionCamDefaults()
     addon.applyActionCamSettings()
 end
 
-function addon:dynamicCameraMovementIsAllowed()
-    return C_CVar.GetCVar("CameraKeepCharacterCentered") == "0" and C_CVar.GetCVar("CameraReduceUnexpectedMovement") == "0"
+function cameraCharacterCenteringEnabled()
+    return C_CVar.GetCVar("CameraKeepCharacterCentered") == "1"
+end
+
+function cameraCharacterCenteringDisabled()
+    return not cameraCharacterCenteringEnabled()
 end
 
 -- options
@@ -507,7 +511,7 @@ function addon:options()
             },
             actionCam = {
                 type = 'group',
-                name = 'ActionCam',
+                name = 'Action Cam',
                 order = 2,
                 set = function(info, value)
                     previousSettings.actionCam = nil
@@ -526,34 +530,55 @@ function addon:options()
                                 type = "select",
                                 order = 1,
                                 values = motionSicknessSettingValues,
-                                width = "normal",
-                                desc = "This accessibility setting and more can be found in Game Menu > Interface > Accessibility",
+                                width = "full",
+                                desc = "Must be set to Allow Dynamic Camera Movement or Reduce Camera Motion to enable Action Cam. This accessibility setting and more can be found in Game Menu > Interface > Accessibility.",
                                 set = function(info, value)
-                                    print(value)
                                     SetCVar("CameraKeepCharacterCentered", (value == 1 or value == 3) and "1" or "0")
                                     SetCVar("CameraReduceUnexpectedMovement", (value == 2 or value == 3) and "1" or "0")
                                 end,
                                 get = function()
-                                    -- print(GetCVar("CameraKeepCharacterCentered"), GetCVar("CameraReduceUnexpectedMovement"))
                                     return ((GetCVar("CameraKeepCharacterCentered") == "1" and 1 or 0) + (GetCVar("CameraReduceUnexpectedMovement") == "1" and 2 or 0))
                                 end
                             },
                             suppressExperimentalCVarPrompt = {
                                 type = "toggle",
                                 order = 2,
-                                name = "Suppress Expirimental CVar Prompt"
+                                width = "full",
+                                name = "Suppress Expirimental Feature Prompt",
+                                desc = "This will remove the warning on load when Action Cam is enabled."
                             }
                         }
                     },
                     motionSicknessMessage = {
-                        type = "description",
-                        hidden = function() return not addon:dynamicCameraMovementIsAllowed() end,
-                        name = "You must Allow Dynamic Camera Moving in the acccessibility setting above before you can enable ActionCam"
+                        type = "group",
+                        name = "Action Cam Disabled",
+                        order = 2,
+                        inline = true,
+                        hidden = cameraCharacterCenteringDisabled,
+                        args = {
+                            message1 = {
+                                type = "description",
+                                order = 1,
+                                name = "To enable Action Cam you must"
+                            },
+                            message2 = {
+                                type = "execute",
+                                order = 2,
+                                width = "double",
+                                name = "Disable Camera Character Centering",
+                                func = function() C_CVar.SetCVar("CameraKeepCharacterCentered", "0") end
+                            },
+                            message3 = {
+                                type = "description",
+                                order = 3,
+                                name = "which is enabled by default to prevent motion sickness in some users."
+                            }
+                        }
                     },
                     dynamicPitch = {
                         type = "group",
                         name = "Dynamic Pitch",
-                        hidden = function() return addon:dynamicCameraMovementIsAllowed() end,
+                        hidden = cameraCharacterCenteringEnabled,
                         inline = true,
                         order = 2,
                         args = {}
@@ -561,7 +586,7 @@ function addon:options()
                     headMovement = {
                         type = "group",
                         name = "Head Movement",
-                        hidden = function() return addon:dynamicCameraMovementIsAllowed() end,
+                        hidden = cameraCharacterCenteringEnabled,
                         inline = true,
                         order = 3,
                         args = {}
@@ -569,7 +594,7 @@ function addon:options()
                     targetFocus = {
                         type = "group",
                         name = "Target Focus",
-                        hidden = function() return addon:dynamicCameraMovementIsAllowed() end,
+                        hidden = cameraCharacterCenteringEnabled,
                         inline = true,
                         order = 4,
                         args = {
@@ -590,7 +615,7 @@ function addon:options()
                                 return "Undo"
                             end
                         end,
-                        hidden = function() return addon:dynamicCameraMovementIsAllowed() end,
+                        hidden = cameraCharacterCenteringEnabled,
                         func = function() addon:toggleActionCamDefaults() end,
                         order = 99
                     }
@@ -622,6 +647,7 @@ function addon:options()
                 name = name,
                 type = "input",
                 order = 50,
+                hidden = cameraCharacterCenteringEnabled,
                 get = function(info)
                     local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(info[#info])
 
@@ -652,6 +678,7 @@ function addon:options()
             type = "group",
             name = "Commands",
             inline = true,
+            hidden = cameraCharacterCenteringEnabled,
             order = 99,
             args = {}
         }
