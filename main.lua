@@ -548,7 +548,6 @@ function addon:options()
                                 type = "toggle",
                                 order = 2,
                                 width = "full",
-                                -- todo: add set
                                 name = "Suppress Expirimental Feature Prompt",
                                 desc = "This will remove the warning on load when Action Cam is enabled."
                             }
@@ -571,7 +570,10 @@ function addon:options()
                                 order = 2,
                                 width = "double",
                                 name = "Disable Camera Character Centering",
-                                func = function() C_CVar.SetCVar("CameraKeepCharacterCentered", "0") end
+                                func = function()
+                                    C_CVar.SetCVar("CameraKeepCharacterCentered", "0")
+                                    addon.applyActionCamSettings()
+                                end
                             },
                             message3 = {
                                 type = "description",
