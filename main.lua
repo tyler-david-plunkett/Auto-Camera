@@ -207,7 +207,8 @@ function addon:autoZoom()
     
     if (
         AuraUtil.FindAuraByName("Running Wild", "player") == nil and
-        (IsMounted("player") or (UnitInVehicle and UnitInVehicle("player")))
+        (IsMounted("player") or (UnitInVehicle and UnitInVehicle("player"))) and
+        settings.general.ridingDistance > targetZoom
     ) then
         targetZoom = settings.general.ridingDistance
     end
