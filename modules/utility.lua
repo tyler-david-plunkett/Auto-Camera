@@ -64,3 +64,7 @@ end
 function unCapitalize(str)
     return str:gsub("^%u", string.lower)
 end
+
+function getOrderOfMagnitude(value)
+    return 10^math.floor(math.log(value) / math.log(10))
+end
