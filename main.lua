@@ -649,20 +649,38 @@ function addon:options()
 
         local var = unCapitalize(cVar:gsub("test_camera", ""):gsub(capitalize(groupName), ""))
         local name = capitalize(splitCamelCase(var == "" and groupName or var))
+        local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(var)
+        local default = C_CVar.GetCVarDefault(CVar)
+        local CVarIsNumeric = tonumber(default) ~= nil
+        local optionType = actionCamArgs[groupName].args[var] and actionCamArgs[groupName].args[var].type or CVarIsNumeric and "range" or "input"
+        local rangeMin = type == "range" and 0 or nil
+        local rangeMax = nil
+        if (optionType == "range") then
+            rangeMax = getOrderOfMagnitude(tonumber(default ~= "0" and default or 0.1)) * 10
+        end
+        local step = nil
+        if (optionType == "range") then
+            step = rangeMax / 100
+        end
+
         actionCamArgs[groupName].args[var] = deepMerge(
             {
                 name = name,
-                type = "input",
+                type = optionType,
+                min = rangeMin,
+                max = rangeMax,
+                step = step,
                 order = 50,
                 hidden = addon.cameraCharacterCenteringEnabled,
                 get = function(info)
-                    local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(info[#info])
-
+                    local value = C_CVar.GetCVar(CVar)
                     if (info.type == 'toggle') then
-                        return C_CVar.GetCVar(CVar) == "1" and true or false
-                     else
-                        return C_CVar.GetCVar(CVar)
-                     end
+                        return value == "1" and true or false
+                    elseif (info.type == 'range') then
+                        return tonumber(value)
+                    else
+                    return value
+                    end
                 end,
                 set = function(info, value)
                     local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(info[#info])
