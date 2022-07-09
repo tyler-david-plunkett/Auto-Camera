@@ -713,6 +713,7 @@ function addon:options()
                 type = "execute",
                 name = capitalize(splitCamelCase(command)),
                 func = function()
+                    previousSettings.actionCam = nil
                     ConsoleExec("ActionCam " .. command)
                     addon:storeActionCamSettings()
                 end
