@@ -154,6 +154,11 @@ function addon:OnInitialize()
         UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED") -- todo> reenable?
     end
 
+    -- apply action cam settings
+    if (addon:cameraCharacterCenteringDisabled()) then
+        addon:applyActionCamSettings()
+    end
+
     if (not STAND_BY) then
         addon:autoZoom()
     end
