@@ -28,6 +28,11 @@ local xpacs = {
     sl = 9
 }
 local actionCamCVars = {} -- populated on VARIABLES_LOADED event
+local motionSicknessSettingValues = {}
+motionSicknessSettingValues[1] = "Keep Character Centered"
+motionSicknessSettingValues[2] = "Reduce Camera Motion"
+motionSicknessSettingValues[3] = "Keep Character Centered and Reduce Camera Motion"
+motionSicknessSettingValues[0] = "Allow Dynamic Camera Movement"
 
 -- todo> move loops?
 for key, command in pairs(C_Console.GetAllCommands()) do
