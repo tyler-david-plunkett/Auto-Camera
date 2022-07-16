@@ -28,11 +28,6 @@ local xpacs = {
     sl = 9
 }
 local actionCamCVars = {} -- populated on VARIABLES_LOADED event
-local motionSicknessSettingValues = {}
-motionSicknessSettingValues[1] = "Keep Character Centered"
-motionSicknessSettingValues[2] = "Reduce Camera Motion"
-motionSicknessSettingValues[3] = "Keep Character Centered and Reduce Camera Motion"
-motionSicknessSettingValues[0] = "Allow Dynamic Camera Movement"
 
 -- todo> move loops?
 for key, command in pairs(C_Console.GetAllCommands()) do
@@ -696,30 +691,6 @@ function addon:options()
             },
             actionCamArgs[groupName].args[var] or {}
         )
-    end
-
-    -- actionCam commands
-    for groupName, group in pairs(actionCamCommandOptions) do
-        actionCamArgs[groupName].args.commands = {
-            type = "group",
-            name = "Commands",
-            inline = true,
-            hidden = addon.cameraCharacterCenteringEnabled,
-            order = 99,
-            args = {}
-        }
-
-        for index, command in pairs(group) do
-            actionCamArgs[groupName].args.commands.args[command] = {
-                type = "execute",
-                name = capitalize(splitCamelCase(command)),
-                func = function()
-                    previousSettings.actionCam = nil
-                    ConsoleExec("ActionCam " .. command)
-                    addon:storeActionCamSettings()
-                end
-            }
-        end
     end
 
     -- standing distances
