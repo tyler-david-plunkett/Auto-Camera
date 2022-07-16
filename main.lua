@@ -45,18 +45,6 @@ for index, CVar in pairs(actionCamCVars) do
     defaultSettings.actionCam[CVar] = C_CVar.GetCVarDefault(CVar)
 end
 
-actionCamCommandOptions = {
-    general = {
-        "full", "basic", "off", "on", "default"
-    },
-    headMovement = {
-        "heavyHeadMove", "noHeadMove", "lowHeadMove", "headMove"
-    },
-    targetFocus = {
-        "focusAll", "focusEnemy", "focusInteract", "focusOff"
-    }
-}
-
 function standingArgKey(race)
     return camelCase(race) .. 'Distance'
 end
