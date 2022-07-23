@@ -632,8 +632,7 @@ function addon:options()
                             [""] = {
                                 type = "toggle",
                                 name = "Dynamic Pitch",
-                                order = 1,
-                                desc = "Dynamically changes camera pitch (camera tilt up and down)"
+                                order = 1
                             },
                             baseFovPad = {
                                 name = "Base FoV Pad",
@@ -641,8 +640,7 @@ function addon:options()
                                 step = 0.01,
                                 softMax = 0.99, -- todo: remove
                                 min = 0.01,
-                                softMin = 0.01, -- todo: remove
-                                desc = "Percentage of vertical field of view below character"
+                                softMin = 0.01 -- todo: remove
                             },
                             baseFovPadFlying = {
                                 name = "Flying Base FoV Pad",
@@ -653,7 +651,6 @@ function addon:options()
                             },
                             baseFovPadDownScale = {
                                 name = "Base FoV Down Scale",
-                                desc = "Scales the Base FoV Pad as camera pitches down",
                                 step = 0.01,
                                 softMax = 1
                             },
