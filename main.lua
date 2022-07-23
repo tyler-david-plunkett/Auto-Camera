@@ -665,6 +665,7 @@ function addon:options()
                         order = 3,
                         args = {
                             strength = {
+                                order = 1,
                                 softMax = 4
                             },
                             firstPersonDampRate = {
