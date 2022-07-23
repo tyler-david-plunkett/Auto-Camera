@@ -9,7 +9,7 @@ local IN_RAID = false
 local IN_DUNGEON = false
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
-local previousSettings = {general = nil, actionCam = nil} -- stores the previous settings when defaults are applied by the user
+local previousSettings = {general = nil, actionCam = nil, actionCamGroups = {}} -- stores the previous settings when defaults are applied by the user
 local playerRace = UnitRace("player")
 local showOtherRaces = false
 local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
@@ -302,6 +302,23 @@ function distanceOption()
     }
 end
 
+function toggleGroupDefaultsOption(group)
+    return {
+        type = "execute",
+        name = function()
+            if (previousSettings.actionCamGroups[group] == nil) then
+                return "Defaults"
+            else
+                return "Undo"
+            end
+        end,
+        func = function()
+            addon:toggleActionCamGroupDefaults(group)
+        end,
+        order = 99
+    }
+end
+
 function addon:toggleGeneralDefaults()
     if (previousSettings.general == nil) then
         previousSettings.general = deepCopy(settings.general)
@@ -320,7 +337,33 @@ function addon:toggleActionCamDefaults()
         deepMerge(settings.actionCam, previousSettings.actionCam)
         previousSettings.actionCam = nil
     end
-    addon.applyActionCamSettings()
+    addon:applyActionCamSettings()
+end
+
+function addon:toggleActionCamGroupDefaults(group)
+    -- create list of CVar relevant to provided group
+    local actionCamGroupCVars = {}
+    for index, CVar in pairs(actionCamCVars) do
+        if (CVar:find(capitalize(group))) then
+            table.insert(actionCamGroupCVars, CVar)
+        end
+    end
+
+    if (previousSettings.actionCamGroups[group] == nil) then
+        -- store current group settings and apply defaults
+        previousSettings.actionCamGroups[group] = {}
+        for index, CVar in pairs(actionCamGroupCVars) do
+            previousSettings.actionCamGroups[group][CVar] = C_CVar.GetCVar(CVar)
+            settings.actionCam[CVar] = C_CVar.GetCVarDefault(CVar)
+        end
+    else
+        -- apply previous group settings and clear previous group settings storage
+        for index, CVar in pairs(actionCamGroupCVars) do
+            settings.actionCam[CVar] = previousSettings.actionCamGroups[group][CVar]
+        end
+        previousSettings.actionCamGroups[group] = nil
+    end
+    addon:applyActionCamSettings()
 end
 
 function addon:cameraCharacterCenteringEnabled()
@@ -328,7 +371,7 @@ function addon:cameraCharacterCenteringEnabled()
 end
 
 function addon:cameraCharacterCenteringDisabled()
-    return not addon.cameraCharacterCenteringEnabled()
+    return not addon:cameraCharacterCenteringEnabled()
 end
 
 -- options
@@ -528,10 +571,10 @@ function addon:options()
                                     SetCVar("CameraKeepCharacterCentered", (value == 1 or value == 3) and "1" or "0")
                                     SetCVar("CameraReduceUnexpectedMovement", (value == 2 or value == 3) and "1" or "0")
 
-                                    if (addon.cameraCharacterCenteringEnabled()) then
+                                    if (addon:cameraCharacterCenteringEnabled()) then
                                         ConsoleExec("ActionCam off")
                                     else
-                                        addon.applyActionCamSettings()
+                                        addon:applyActionCamSettings()
                                     end
                                 end,
                                 get = function()
@@ -544,6 +587,9 @@ function addon:options()
                                 width = "full",
                                 name = "Suppress Expirimental Feature Prompt",
                                 desc = "This will remove the warning on load when Action Cam is enabled."
+                            },
+                            overShoulder = {
+                                softMax = 2,
                             }
                         }
                     },
@@ -566,7 +612,7 @@ function addon:options()
                                 name = "Disable Camera Character Centering",
                                 func = function()
                                     C_CVar.SetCVar("CameraKeepCharacterCentered", "0")
-                                    addon.applyActionCamSettings()
+                                    addon:applyActionCamSettings()
                                 end
                             },
                             message3 = {
@@ -582,7 +628,37 @@ function addon:options()
                         hidden = addon.cameraCharacterCenteringEnabled,
                         inline = true,
                         order = 2,
-                        args = {}
+                        args = {
+                            [""] = {
+                                type = "toggle",
+                                name = "Dynamic Pitch",
+                                order = 1,
+                                desc = "Dynamically changes camera pitch (camera tilt up and down)"
+                            },
+                            baseFovPad = {
+                                name = "Base FoV Pad",
+                                order = 2,
+                                step = 0.01,
+                                softMax = 0.99, -- todo: remove
+                                min = 0.01,
+                                softMin = 0.01, -- todo: remove
+                                desc = "Percentage of vertical field of view below character"
+                            },
+                            baseFovPadFlying = {
+                                name = "Flying Base FoV Pad",
+                                step = 0.01,
+                                softMax = 0.99, -- todo: remove
+                                min = 0.01,
+                                softMin = 0.01, -- todo: remove
+                            },
+                            baseFovPadDownScale = {
+                                name = "Base FoV Down Scale",
+                                desc = "Scales the Base FoV Pad as camera pitches down",
+                                step = 0.01,
+                                softMax = 1
+                            },
+                            toggleDefaults = toggleGroupDefaultsOption('dynamicPitch')
+                        }
                     },
                     headMovement = {
                         type = "group",
@@ -590,7 +666,21 @@ function addon:options()
                         hidden = addon.cameraCharacterCenteringEnabled,
                         inline = true,
                         order = 3,
-                        args = {}
+                        args = {
+                            strength = {
+                                softMax = 4
+                            },
+                            firstPersonDampRate = {
+                                softMax = 50
+                            },
+                            movingDampRate = {
+                                softMax = 50
+                            },
+                            standingDampRate = {
+                                softMax = 30
+                            },
+                            toggleDefaults = toggleGroupDefaultsOption('headMovement')
+                        }
                     },
                     targetFocus = {
                         type = "group",
@@ -604,7 +694,8 @@ function addon:options()
                             },
                             interactEnable = {
                                 type = "toggle"
-                            }
+                            },
+                            toggleDefaults = toggleGroupDefaultsOption('targetFocus')
                         }
                     },
                     toggleDefaults = {
@@ -652,18 +743,18 @@ function addon:options()
         if (optionType == "range") then
             rangeMax = getOrderOfMagnitude(tonumber(default ~= "0" and default or 0.1)) * 10
         end
-        local step = nil
+        local bigStep = nil
         if (optionType == "range") then
-            step = rangeMax / 100
+            bigStep = rangeMax / 100
         end
 
         actionCamArgs[groupName].args[var] = deepMerge(
             {
                 name = name,
                 type = optionType,
-                min = rangeMin,
-                max = rangeMax,
-                step = step,
+                softMin = rangeMin,
+                softMax = rangeMax,
+                bigStep = bigStep,
                 order = 50,
                 hidden = addon.cameraCharacterCenteringEnabled,
                 get = function(info)
@@ -685,6 +776,8 @@ function addon:options()
 
                     C_CVar.SetCVar(CVar, value)
                     settings.actionCam[CVar] = value
+                    previousSettings.actionCam = nil
+                    previousSettings.actionCamGroups[groupName] = nil
                 end,
             },
             actionCamArgs[groupName].args[var] or {}
