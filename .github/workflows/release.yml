@@ -21,21 +21,18 @@ jobs:
         id: create_distribution
         run: ./build.sh "${{ github.ref_name }}"
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.2.3
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: Upload release json artifact to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./release.json
           asset_name: release.json
           asset_content_type: application/json
@@ -45,7 +42,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./Auto-Camera.zip
           asset_name: Auto-Camera-${{ github.ref_name }}.zip
           asset_content_type: application/zip
@@ -55,7 +52,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./Auto-Camera-classic.zip
           asset_name: Auto-Camera-${{ github.ref_name }}-classic.zip
           asset_content_type: application/zip
@@ -65,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
           asset_path: ./Auto-Camera-bcc.zip
           asset_name: Auto-Camera-${{ github.ref_name }}-bcc.zip
           asset_content_type: application/zip
