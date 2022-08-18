@@ -330,6 +330,7 @@ function addon:toggleGeneralDefaults()
 end
 
 function addon:toggleActionCamDefaults()
+    -- todo> motion sickness
     if (previousSettings.actionCam == nil) then
         previousSettings.actionCam = deepCopy(settings.actionCam)
         deepMerge(settings.actionCam, defaultSettings.actionCam)
@@ -560,7 +561,7 @@ function addon:options()
                         order = 1,
                         name = "General",
                         args = {
-                            motionSickness = {
+                            motionSickness = { -- todo> replace with 2 check boxes?
                                 name = "Motion Sickness",
                                 type = "select",
                                 order = 1,
@@ -878,10 +879,6 @@ function addon:BARBER_SHOP_CLOSE()
     end
 end
 
--- todo> necessary?
-function addon:VARIABLES_LOADED()
-end
-
 local f = CreateFrame("Frame")
 f:RegisterEvent("PET_BATTLE_OPENING_START")
 f:RegisterEvent("PET_BATTLE_CLOSE")
@@ -890,5 +887,4 @@ f:RegisterEvent("ENCOUNTER_END")
 f:RegisterEvent("PLAYER_ENTERING_WORLD")
 f:RegisterEvent("BARBER_SHOP_OPEN")
 f:RegisterEvent("BARBER_SHOP_CLOSE")
-f:RegisterEvent("VARIABLES_LOADED")
 f:SetScript("OnEvent", OnEvent)
