@@ -68,3 +68,37 @@ end
 function getOrderOfMagnitude(value)
     return 10^math.floor(math.log(value) / math.log(10))
 end
+
+-- join elements of a table as a string
+function joinTable(tbl, glue)
+    glue = glue or ""
+
+    local str = ""
+
+    for key, value in pairs(tbl) do
+        str = str .. (str ~= "" and glue or "") .. value
+    end
+
+    return str
+end
+
+-- recursively print a table
+function printTable(tbl, depth)
+    local depth = depth or 0;
+    
+    for key, value in pairs(tbl) do
+        local indent = ""
+
+        for i = 0, depth do
+            indent = indent .. "  "
+        end
+        
+        if (type(value) == 'table') then
+            print(indent .. key .. ': {')
+            printTable(value, depth + 1)
+            print(indent .. '}')
+        else
+            print (indent .. key .. ': ' .. value)
+        end
+    end
+end
