@@ -13,13 +13,13 @@ function deepCopy(tree)
     end
 end
 
-function assign (target, source)
+function assign(target, source)
     table.foreach(source, function(key, value)
         target[key] = value
     end)
 end
 
-function set (list)
+function set(list)
     local set = {}
     for _, l in ipairs(list) do set[l] = true end
     return set
