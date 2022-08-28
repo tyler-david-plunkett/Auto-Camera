@@ -27,23 +27,11 @@ local xpacs = {
     boa = 8,
     sl = 9
 }
-local actionCamCVars = {} -- populated on VARIABLES_LOADED event
 local motionSicknessSettingValues = {}
 motionSicknessSettingValues[1] = "Keep Character Centered"
 motionSicknessSettingValues[2] = "Reduce Camera Motion"
 motionSicknessSettingValues[3] = "Keep Character Centered and Reduce Camera Motion"
 motionSicknessSettingValues[0] = "Allow Dynamic Camera Movement"
-
--- todo> move loops?
-for key, command in pairs(C_Console.GetAllCommands()) do
-    if (command.commandType == 0 and strfind(command.command, 'test_camera') ~= nil) then
-        table.insert(actionCamCVars, command.command)
-    end
-end
-
-for index, CVar in pairs(actionCamCVars) do
-    defaultSettings.actionCam[CVar] = C_CVar.GetCVarDefault(CVar)
-end
 
 function standingArgKey(race)
     return camelCase(race) .. 'Distance'
@@ -71,31 +59,7 @@ end
 
 local playerStandingArgKey = standingArgKey(playerRace)
 
-for race in pairs(set {"Worgen"}) do
-    defaultSettings.general[standingArgKey(race)] =  4.6
-end
-
-for race in pairs(set {"Night Elf", "Nightborne"}) do
-    defaultSettings.general[standingArgKey(race)] =  4
-end
-
-for race in pairs(set {"Draenei", "Pandaren" ,"Orc", "Troll", "Mag'har Orc", "Zandalari Troll", "Lightforged Draenei"}) do
-    defaultSettings.general[standingArgKey(race)] =  4.5
-end
-
-for race in pairs(set {"Human", "Dwarf", "Undead", "Blood Elf" ,"Void Elf", "Dark Iron Dwarf"}) do
-    defaultSettings.general[standingArgKey(race)] = 3.5
-end
-
-for race in pairs(set {"Gnome", "Goblin", "Mechagnome", "Vulpera"}) do
-    defaultSettings.general[standingArgKey(race)] = 2
-end
-
-for race in pairs(set {"Tauren", "Kul Tiran", "Highmountain Tauren"}) do
-    defaultSettings.general[standingArgKey(race)] = 5.2
-end
-
-local settings = defaultSettings
+local settings = defaultSettings()
 local units = {}
 units[1] = 'target'
 for i = 1, 10 do
@@ -116,24 +80,24 @@ end
 function addon:loadSettings()
     settings = addon.db.global
 
-    -- assume earliest version
-    settings.version = settings.version or "0.0.0"
-
     -- todo: test settings update
     -- update settings if necessary
     if (settings.version ~= version) then
         addon:updateSettings(settings)
     end
-
-    deepMerge(settings, deepMerge(deepCopy(defaultSettings), settings, true))
 end
 
 function addon:updateSettings(settings)
+    -- set default version if nil
+    settings.version = settings.version or "0.0.0"
+
     for updateVersion, updateFunction in pairs(settingsUpdateMap) do
         if (updateVersion > settings.version) then
             updateFunction(settings)
         end
     end
+
+    deepMerge(settings, deepMerge(defaultSettings(), settings, true))
 
     settings.version = version
     return settings
@@ -142,7 +106,7 @@ end
 -- addon hook callback functions
 function addon:OnInitialize()
     local options = addon:options()
-    addon.db = LibStub("AceDB-3.0"):New("AutoCameraDB", {global = defaultSettings}, true)
+    addon.db = LibStub("AceDB-3.0"):New("AutoCameraDB", {global = defaultSettings()}, true)
     addon:loadSettings()
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
@@ -322,7 +286,7 @@ end
 function addon:toggleGeneralDefaults()
     if (previousSettings.general == nil) then
         previousSettings.general = deepCopy(settings.general)
-        deepMerge(settings.general, defaultSettings.general)
+        deepMerge(settings.general, defaultSettings().general)
     else
         deepMerge(settings.general, previousSettings.general)
         previousSettings.general = nil
@@ -333,7 +297,7 @@ function addon:toggleActionCamDefaults()
     -- todo> motion sickness
     if (previousSettings.actionCam == nil) then
         previousSettings.actionCam = deepCopy(settings.actionCam)
-        deepMerge(settings.actionCam, defaultSettings.actionCam)
+        deepMerge(settings.actionCam, defaultSettings().actionCam)
     else
         deepMerge(settings.actionCam, previousSettings.actionCam)
         previousSettings.actionCam = nil

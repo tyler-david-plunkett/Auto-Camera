@@ -9,6 +9,7 @@ bindings.xml
 embeds.xml
 
 modules\utility.lua
+modules\actionCamCVars.lua
 modules\getForm.lua
 modules\version.lua
 modules\settings.lua
