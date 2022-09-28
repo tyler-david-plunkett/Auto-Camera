@@ -99,6 +99,8 @@ function T.printTable(tbl, depth)
             print(indent .. key .. ': {')
             T.printTable(value, depth + 1)
             print(indent .. '}')
+        elseif (type(value) == 'function') then
+            print (indent .. key .. ': function')
         else
             print (indent .. key .. ': ' .. value)
         end
