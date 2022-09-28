@@ -1,4 +1,4 @@
-local addonName, vars = ...
+local addonName, T = ...
 AutoCamera = LibStub("AceAddon-3.0"):NewAddon(addonName)
 local addon = AutoCamera
 local STAND_BY = false
@@ -12,7 +12,7 @@ local deltaTime = 0.1
 local previousSettings = {general = nil, actionCam = nil, actionCamGroups = {}} -- stores the previous settings when defaults are applied by the user
 local playerRace = UnitRace("player")
 local showOtherRaces = false
-local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
+local races = T.set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
 races[playerRace] = true -- adds player race if it's missing from race set
 local maxZoomDistance = 50
 local xpac = tonumber(string.match(GetBuildInfo(), "([0-9]+)\..*"))
@@ -33,11 +33,7 @@ motionSicknessSettingValues[2] = "Reduce Camera Motion"
 motionSicknessSettingValues[3] = "Keep Character Centered and Reduce Camera Motion"
 motionSicknessSettingValues[0] = "Allow Dynamic Camera Movement"
 
-function standingArgKey(race)
-    return camelCase(race) .. 'Distance'
-end
-
-function enemyArgKey(unit)
+local function enemyArgKey(unit)
     local enemyType
 	if (
 		(unitClassification == "worldboss" or
@@ -57,9 +53,9 @@ function enemyArgKey(unit)
     return enemyType .. "EnemyDistance"
 end
 
-local playerStandingArgKey = standingArgKey(playerRace)
+local playerStandingArgKey = T.standingArgKey(playerRace)
 
-local settings = defaultSettings()
+local settings = T.defaultSettings()
 local units = {}
 units[1] = 'target'
 for i = 1, 10 do
@@ -82,7 +78,7 @@ function addon:loadSettings()
 
     -- todo: test settings update
     -- update settings if necessary
-    if (settings.version ~= version) then
+    if (settings.version ~= T.version) then
         addon:updateSettings(settings)
     end
 end
@@ -97,16 +93,16 @@ function addon:updateSettings(settings)
         end
     end
 
-    deepMerge(settings, deepMerge(defaultSettings(), settings, true))
+    T.deepMerge(settings, T.deepMerge(T.defaultSettings(), settings, true))
 
-    settings.version = version
+    settings.version = T.version
     return settings
 end
 
 -- addon hook callback functions
 function addon:OnInitialize()
     local options = addon:options()
-    addon.db = LibStub("AceDB-3.0"):New("AutoCameraDB", {global = defaultSettings()}, true)
+    addon.db = LibStub("AceDB-3.0"):New("AutoCameraDB", {global = T.defaultSettings()}, true)
     addon:loadSettings()
     LibStub("AceConfig-3.0"):RegisterOptionsTable(addonName, options)
     LibStub("AceConfigDialog-3.0"):AddToBlizOptions(addonName, addonName)
@@ -247,7 +243,7 @@ function addon:storeActionCamSettings()
     end
 end
 
-function viewOption()
+local function viewOption()
     return {
         type = 'range',
         min = 1,
@@ -256,7 +252,7 @@ function viewOption()
     }
 end
 
-function distanceOption()
+local function distanceOption()
     return {
         type = 'range',
         min = 0,
@@ -266,7 +262,7 @@ function distanceOption()
     }
 end
 
-function toggleGroupDefaultsOption(group)
+local function toggleGroupDefaultsOption(group)
     return {
         type = "execute",
         name = function()
@@ -285,10 +281,10 @@ end
 
 function addon:toggleGeneralDefaults()
     if (previousSettings.general == nil) then
-        previousSettings.general = deepCopy(settings.general)
-        deepMerge(settings.general, defaultSettings().general)
+        previousSettings.general = T.deepCopy(settings.general)
+        T.deepMerge(settings.general, T.defaultSettings().general)
     else
-        deepMerge(settings.general, previousSettings.general)
+        T.deepMerge(settings.general, previousSettings.general)
         previousSettings.general = nil
     end
 end
@@ -296,10 +292,10 @@ end
 function addon:toggleActionCamDefaults()
     -- todo> motion sickness
     if (previousSettings.actionCam == nil) then
-        previousSettings.actionCam = deepCopy(settings.actionCam)
-        deepMerge(settings.actionCam, defaultSettings().actionCam)
+        previousSettings.actionCam = T.deepCopy(settings.actionCam)
+        T.deepMerge(settings.actionCam, T.defaultSettings().actionCam)
     else
-        deepMerge(settings.actionCam, previousSettings.actionCam)
+        T.deepMerge(settings.actionCam, previousSettings.actionCam)
         previousSettings.actionCam = nil
     end
     addon:applyActionCamSettings()
@@ -309,7 +305,7 @@ function addon:toggleActionCamGroupDefaults(group)
     -- create list of CVar relevant to provided group
     local actionCamGroupCVars = {}
     for index, CVar in pairs(actionCamCVars) do
-        if (CVar:find(capitalize(group))) then
+        if (CVar:find(T.capitalize(group))) then
             table.insert(actionCamGroupCVars, CVar)
         end
     end
@@ -413,19 +409,19 @@ function addon:options()
                                 order = 5,
                                 hidden = function() return settings.general.standByBehavior ~= "view" end
                             },
-                            manualStandByView = merge(viewOption(), {
+                            manualStandByView = T.merge(viewOption(), {
                                 name = 'Manual Stand-By View',
                                 desc = 'The camera view to go to when toggling Auto-Camera off',
                                 order = 6,
                                 hidden = function() return settings.general.standByBehavior ~= "view" end
                             }),
-                            instanceEncounterView = merge(viewOption(), {
+                            instanceEncounterView = T.merge(viewOption(), {
                                 name = 'Instance Encounter View',
                                 desc = 'The camera view to go to during an encounter (e.g. boss battle)',
                                 order = 7,
                                 hidden = function() return settings.general.standByBehavior ~= "view" end
                             }),
-                            petBattleView = merge(viewOption(), {
+                            petBattleView = T.merge(viewOption(), {
                                 name = 'Pet Battle View',
                                 desc = 'The camera view to go to during a pet battle.',
                                 order = 8,
@@ -459,7 +455,7 @@ function addon:options()
                         order = 3,
                         name = "Contextual Camera Distances",
                         args = {
-                            ridingDistance = merge(distanceOption(), {
+                            ridingDistance = T.merge(distanceOption(), {
                                 name = 'Riding',
                                 desc = 'Camera distance when riding on a mount or in a vehicle',
                                 order = 1
@@ -472,22 +468,22 @@ function addon:options()
                                 step = 0.1,
                                 order = 2
                             },
-                            normalEnemyDistance = merge(distanceOption(), {
+                            normalEnemyDistance = T.merge(distanceOption(), {
                                 name = 'Per Normal Enemy',
                                 desc = 'Distance to add per normal enemy on screen near the player character',
                                 order = 3
                             }),
-                            eliteEnemyDistance = merge(distanceOption(), {
+                            eliteEnemyDistance = T.merge(distanceOption(), {
                                 name = 'Per Elite Enemy',
                                 desc = 'Distance to add per elite enemy on screen near the player character',
                                 order = 4
                             }),
-                            raidEnemyDistance = merge(distanceOption(), {
+                            raidEnemyDistance = T.merge(distanceOption(), {
                                 name = 'Per Raid Enemy',
                                 desc = 'Distance to add per raid enemy on screen near the player character',
                                 order = 5,
                             }),
-                            bossEnemyDistance = merge(distanceOption(), {
+                            bossEnemyDistance = T.merge(distanceOption(), {
                                 name = 'Per Boss Enemy',
                                 desc = 'Distance to add per boss enemy on screen near the player character',
                                 order = 6
@@ -685,7 +681,7 @@ function addon:options()
     for index, cVar in pairs(actionCamCVars) do
         local groupName = nil
         for group, setting in pairs(actionCamArgs) do
-            if (strfind(cVar, capitalize(group)) ~= nil) then
+            if (strfind(cVar, T.capitalize(group)) ~= nil) then
                 groupName = group
                 break
             end
@@ -695,23 +691,23 @@ function addon:options()
             groupName = "general"
         end
 
-        local var = unCapitalize(cVar:gsub("test_camera", ""):gsub(capitalize(groupName), ""))
-        local name = capitalize(splitCamelCase(var == "" and groupName or var))
-        local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(var)
+        local var = T.unCapitalize(cVar:gsub("test_camera", ""):gsub(T.capitalize(groupName), ""))
+        local name = T.capitalize(T.splitCamelCase(var == "" and groupName or var))
+        local CVar = 'test_camera' .. T.capitalize(groupName:gsub("general", "")) .. T.capitalize(var)
         local default = C_CVar.GetCVarDefault(CVar)
         local CVarIsNumeric = tonumber(default) ~= nil
         local optionType = actionCamArgs[groupName].args[var] and actionCamArgs[groupName].args[var].type or CVarIsNumeric and "range" or "input"
         local rangeMin = type == "range" and 0 or nil
         local rangeMax = nil
         if (optionType == "range") then
-            rangeMax = getOrderOfMagnitude(tonumber(default ~= "0" and default or 0.1)) * 10
+            rangeMax = T.getOrderOfMagnitude(tonumber(default ~= "0" and default or 0.1)) * 10
         end
         local bigStep = nil
         if (optionType == "range") then
             bigStep = rangeMax / 100
         end
 
-        actionCamArgs[groupName].args[var] = deepMerge(
+        actionCamArgs[groupName].args[var] = T.deepMerge(
             {
                 name = name,
                 type = optionType,
@@ -731,7 +727,7 @@ function addon:options()
                     end
                 end,
                 set = function(info, value)
-                    local CVar = 'test_camera' .. capitalize(groupName:gsub("general", "")) .. capitalize(info[#info])
+                    local CVar = 'test_camera' .. T.capitalize(groupName:gsub("general", "")) .. T.capitalize(info[#info])
                     
                     if (type(value) == 'boolean') then
                         value = value and 1 or 0 -- convert to string
@@ -750,7 +746,7 @@ function addon:options()
     -- standing distances
     local standingDistances = options.args.general.args.standingDistances
     for race in pairs(races) do
-        standingDistances.args[standingArgKey(race)] = merge(distanceOption(), {
+        standingDistances.args[T.standingArgKey(race)] = T.merge(distanceOption(), {
             name = race,
             hidden = function() return (not showOtherRaces) and ((playerRace ~= race) and (playerRace ~= "Worgen" or race ~= "Human")) end
         })

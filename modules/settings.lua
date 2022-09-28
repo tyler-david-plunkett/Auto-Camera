@@ -1,4 +1,10 @@
-function defaultSettings()
+local addonName, T = ...
+
+function T.standingArgKey(race)
+    return T.camelCase(race) .. 'Distance'
+end
+
+function T.defaultSettings()
   local defaultSettings = {
     general = {
       standByOnLoad = false,
@@ -18,28 +24,28 @@ function defaultSettings()
     }
   }
 
-  for race in pairs(set {"Worgen"}) do
-    defaultSettings.general[standingArgKey(race)] =  4.6
+  for race in pairs(T.set {"Worgen"}) do
+    defaultSettings.general[T.standingArgKey(race)] =  4.6
   end
   
-  for race in pairs(set {"Night Elf", "Nightborne"}) do
-    defaultSettings.general[standingArgKey(race)] =  4
+  for race in pairs(T.set {"Night Elf", "Nightborne"}) do
+    defaultSettings.general[T.standingArgKey(race)] =  4
   end
   
-  for race in pairs(set {"Draenei", "Pandaren" ,"Orc", "Troll", "Mag'har Orc", "Zandalari Troll", "Lightforged Draenei"}) do
-    defaultSettings.general[standingArgKey(race)] =  4.5
+  for race in pairs(T.set {"Draenei", "Pandaren" ,"Orc", "Troll", "Mag'har Orc", "Zandalari Troll", "Lightforged Draenei"}) do
+    defaultSettings.general[T.standingArgKey(race)] =  4.5
   end
   
-  for race in pairs(set {"Human", "Dwarf", "Undead", "Blood Elf" ,"Void Elf", "Dark Iron Dwarf"}) do
-    defaultSettings.general[standingArgKey(race)] = 3.5
+  for race in pairs(T.set {"Human", "Dwarf", "Undead", "Blood Elf" ,"Void Elf", "Dark Iron Dwarf"}) do
+    defaultSettings.general[T.standingArgKey(race)] = 3.5
   end
   
-  for race in pairs(set {"Gnome", "Goblin", "Mechagnome", "Vulpera"}) do
-    defaultSettings.general[standingArgKey(race)] = 2
+  for race in pairs(T.set {"Gnome", "Goblin", "Mechagnome", "Vulpera"}) do
+    defaultSettings.general[T.standingArgKey(race)] = 2
   end
   
-  for race in pairs(set {"Tauren", "Kul Tiran", "Highmountain Tauren"}) do
-    defaultSettings.general[standingArgKey(race)] = 5.2
+  for race in pairs(T.set {"Tauren", "Kul Tiran", "Highmountain Tauren"}) do
+    defaultSettings.general[T.standingArgKey(race)] = 5.2
   end
 
   for index, CVar in pairs(actionCamCVars) do
@@ -53,7 +59,7 @@ settingsUpdateMap = {}
 
 settingsUpdateMap['0.2.0'] = function(settings)
   -- copy root as general
-  local general = deepCopy(settings)
+  local general = T.deepCopy(settings)
 
   -- empty table
   for key in pairs(settings) do
