@@ -232,13 +232,13 @@ function addon:autoZoom()
 end
 
 function addon:applyActionCamSettings() 
-    for index, CVar in pairs(actionCamCVars) do
+    for index, CVar in pairs(T.actionCamCVars) do
         C_CVar.SetCVar(CVar, settings.actionCam[CVar])
     end
 end
 
 function addon:storeActionCamSettings() 
-    for index, CVar in pairs(actionCamCVars) do
+    for index, CVar in pairs(T.actionCamCVars) do
         settings.actionCam[CVar] = C_CVar.GetCVar(CVar, settings.actionCam[CVar])
     end
 end
@@ -304,7 +304,7 @@ end
 function addon:toggleActionCamGroupDefaults(group)
     -- create list of CVar relevant to provided group
     local actionCamGroupCVars = {}
-    for index, CVar in pairs(actionCamCVars) do
+    for index, CVar in pairs(T.actionCamCVars) do
         if (CVar:find(T.capitalize(group))) then
             table.insert(actionCamGroupCVars, CVar)
         end
@@ -678,7 +678,7 @@ function addon:options()
     local actionCamArgs = options.args.actionCam.args
 
     -- actionCam CVars
-    for index, cVar in pairs(actionCamCVars) do
+    for index, cVar in pairs(T.actionCamCVars) do
         local groupName = nil
         for group, setting in pairs(actionCamArgs) do
             if (strfind(cVar, T.capitalize(group)) ~= nil) then

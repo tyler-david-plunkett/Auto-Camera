@@ -48,7 +48,7 @@ function T.defaultSettings()
     defaultSettings.general[T.standingArgKey(race)] = 5.2
   end
 
-  for index, CVar in pairs(actionCamCVars) do
+  for index, CVar in pairs(T.actionCamCVars) do
     defaultSettings.actionCam[CVar] = C_CVar.GetCVarDefault(CVar)
   end
 
