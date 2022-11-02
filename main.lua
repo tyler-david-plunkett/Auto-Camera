@@ -530,11 +530,18 @@ function addon:BARBER_SHOP_CLOSE()
 end
 
 local f = CreateFrame("Frame")
-f:RegisterEvent("PET_BATTLE_OPENING_START")
-f:RegisterEvent("PET_BATTLE_CLOSE")
-f:RegisterEvent("ENCOUNTER_START")
-f:RegisterEvent("ENCOUNTER_END")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("BARBER_SHOP_OPEN")
-f:RegisterEvent("BARBER_SHOP_CLOSE")
+
+local classicEvents = set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD"}
+local wrathEvents = set {"BARBER_SHOP_OPEN", "BARBER_SHOP_CLOSE"}
+
+for event in pairs(classicEvents) do
+    f:RegisterEvent(event)
+end
+
+if (xpac >= xpacs.wolc) then
+    for event in pairs(wrathEvents) do
+        f:RegisterEvent(event)
+    end
+end
+
 f:SetScript("OnEvent", OnEvent)
