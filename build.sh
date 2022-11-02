@@ -5,6 +5,7 @@ addonVersion=$1
 retailInterfaceVersion=`grep "## Interface" Auto-Camera.toc | grep -oEi "[0-9]*"`
 classicInterfaceVersion=`grep "## Interface" Auto-Camera-Classic.toc | grep -oEi "[0-9]*"`
 bccInterfaceVersion=`grep "## Interface" Auto-Camera-BCC.toc | grep -oEi "[0-9]*"`
+wrathInterfaceVersion=`grep "## Interface" Auto-Camera-Wrath.toc | grep -oEi "[0-9]*"`
 
 mkdir Auto-Camera
 cp *.lua Auto-Camera
@@ -24,9 +25,13 @@ zip -r Auto-Camera-classic.zip Auto-Camera
 cp Auto-Camera-BCC.toc Auto-Camera/Auto-Camera.toc
 zip -r Auto-Camera-bcc.zip Auto-Camera
 
+# create bcc artifact
+cp Auto-Camera-Wrath.toc Auto-Camera/Auto-Camera.toc
+zip -r Auto-Camera-bcc.zip Auto-Camera
+
 # create release.json
-releaseJSON='{"releases":[{"filename":"Auto-Camera-%s.zip","metadata":[{"flavor":"mainline","interface":%s}]},{"filename":"Auto-Camera-%s-classic.zip","metadata":[{"flavor":"classic","interface":%s}]},{"filename":"Auto-Camera-%s-bcc.zip","metadata":[{"flavor":"bcc","interface":%s}]}]}'
-printf "$releaseJSON" "$addonVersion" "$retailInterfaceVersion" "$addonVersion" "$classicInterfaceVersion" "$addonVersion" "$bccInterfaceVersion" > release.json
+releaseJSON='{"releases":[{"filename":"Auto-Camera-%s.zip","metadata":[{"flavor":"mainline","interface":%s}]},{"filename":"Auto-Camera-%s-classic.zip","metadata":[{"flavor":"classic","interface":%s}]},{"filename":"Auto-Camera-%s-bcc.zip","metadata":[{"flavor":"bcc","interface":%s}]}]},{"filename":"Auto-Camera-%s-wrath.zip","metadata":[{"flavor":"wrath","interface":%s}]}]}'
+printf "$releaseJSON" "$addonVersion" "$retailInterfaceVersion" "$addonVersion" "$classicInterfaceVersion" "$addonVersion" "$bccInterfaceVersion" "$wrathInterfaceVersion" > release.json
 
 # clean up
 rm -r Auto-Camera
