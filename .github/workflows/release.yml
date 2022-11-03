@@ -66,3 +66,13 @@ jobs:
           asset_path: ./Auto-Camera-bcc.zip
           asset_name: Auto-Camera-${{ github.ref_name }}-bcc.zip
           asset_content_type: application/zip
+
+      - name: Upload bcc artifact to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./Auto-Camera-wrath.zip
+          asset_name: Auto-Camera-${{ github.ref_name }}-wrath.zip
+          asset_content_type: application/zip
