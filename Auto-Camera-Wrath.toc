@@ -1,4 +1,4 @@
-## Interface: 11403
+## Interface: 30400
 ## Title: Auto-Camera
 ## Notes: Dynamically zooms the camera in and out based on your character's surroundings
 ## Author: Pockets
@@ -8,9 +8,6 @@
 embeds.xml
 
 modules\utility.lua
-modules\actionCamCVars.lua
 modules\getForm.lua
-modules\version.lua
-modules\settings.lua
 
 main.lua

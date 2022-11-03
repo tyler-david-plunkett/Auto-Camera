@@ -1,11 +1,10 @@
-## Interface: 90207
+## Interface: 100000
 ## Title: Auto-Camera
 ## Notes: Dynamically zooms the camera in and out based on your character's surroundings
 ## Author: Pockets
-## Version: 0.1.3
+## Version: 0.1.5
 ## SavedVariables: AutoCameraDB
 
-bindings.xml
 embeds.xml
 
 modules\utility.lua
