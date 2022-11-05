@@ -841,8 +841,8 @@ end
 
 local f = CreateFrame("Frame")
 
-local classicEvents = set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD"}
-local wrathEvents = set {"BARBER_SHOP_OPEN", "BARBER_SHOP_CLOSE"}
+local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD"}
+local wrathEvents = T.set {"BARBER_SHOP_OPEN", "BARBER_SHOP_CLOSE"}
 
 for event in pairs(classicEvents) do
     f:RegisterEvent(event)
