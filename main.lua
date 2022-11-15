@@ -12,7 +12,7 @@ local deltaTime = 0.1
 local prevSettings = nil
 local playerRace = UnitRace("player")
 local showOtherRaces = false
-local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera"}
+local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera", "Dracthyr"}
 races[playerRace] = true -- adds player race if it's missing from race set
 local maxZoomDistance = 50
 local xpac = tonumber(string.match(GetBuildInfo(), "([0-9]+)\..*"))
@@ -70,7 +70,7 @@ end
 
 local playerStandingArgKey = standingArgKey(playerRace)
 
-for race in pairs(set {"Worgen"}) do
+for race in pairs(set {"Worgen", "Dracthyr"}) do
     defaults.global[standingArgKey(race)] =  4.6
 end
 
