@@ -24,7 +24,7 @@ function T.defaultSettings()
     }
   }
 
-  for race in pairs(T.set {"Worgen"}) do
+  for race in pairs(T.set {"Worgen", "Dracthyr"}) do
     defaultSettings.general[T.standingArgKey(race)] =  4.6
   end
   
