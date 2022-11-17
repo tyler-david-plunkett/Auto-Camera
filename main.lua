@@ -390,7 +390,8 @@ function addon:options()
                     }),
                     speedMultiplier = {
                         type = 'range',
-                        name = 'Movement Multiplier',
+                        name = 'Speed Multiplier',
+                        desc = 'Multiplier for addition zoom distance based on player speed',
                         min = 0,
                         max = 0.5,
                         step = 0.1,
