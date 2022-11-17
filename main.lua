@@ -12,6 +12,7 @@ local deltaTime = 0.1
 local prevSettings = nil
 local playerRace = UnitRace("player")
 local showOtherRaces = false
+local bodyType = {neutral=1, masc=2, fem=3}
 local races = set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera", "Dracthyr"}
 races[playerRace] = true -- adds player race if it's missing from race set
 local maxZoomDistance = 50
@@ -70,8 +71,12 @@ end
 
 local playerStandingArgKey = standingArgKey(playerRace)
 
-for race in pairs(set {"Worgen", "Dracthyr"}) do
+for race in pairs(set {"Worgen"}) do
     defaults.global[standingArgKey(race)] =  4.6
+end
+
+for race in pairs(set {"Dracthyr"}) do
+    defaults.global[standingArgKey(race)] =  5.3
 end
 
 for race in pairs(set {"Night Elf", "Nightborne"}) do
@@ -164,7 +169,14 @@ function addon:autoZoom()
     local currentSpeed, runSpeed, flightSpeed, swimSpeed = GetUnitSpeed("player")
 
     targetZoom = settings[playerStandingArgKey]
-    if (playerRace == "Worgen" and not isWorgenForm()) then
+
+    -- Worgen and Drakthyr Human override
+    if (set {"Human 2", "Human 1", "Visage 2"}[getPlayerModelName()] ~= nil) then
+        targetZoom = settings.humanDistance
+    end
+
+    -- Drakthyr Blood Elf override
+    if (set {"Visage 1"}[getPlayerModelName()] ~= nil) then
         targetZoom = settings.humanDistance
     end
     
@@ -439,13 +451,34 @@ function addon:options()
     for race in pairs(races) do
         standingDistances.args[standingArgKey(race)] = merge(distanceOption(), {
             name = race,
-            hidden = function() return (not showOtherRaces) and ((playerRace ~= race) and (playerRace ~= "Worgen" or race ~= "Human")) end
+            hidden = function()
+                -- show all when Show Other Races is selected
+                if (showOtherRaces) then return false end
+
+                -- show current race
+                if (playerRace == race) then return false end
+
+                -- show Human if player is Worgen or Femanin Dracthry
+                if (race == "Human" and (playerRace == "Worgen" or (playerRace == "Dracthyr" and UnitSex("player") == bodyType.fem))) then return false end
+
+                -- show Blood Elf if player is Masculine Dracthry
+                if (race == "Blood Elf" and (playerRace == "Dracthyr" and UnitSex("player") == bodyType.masc)) then return false end
+
+                -- otherwise hide
+                return true
+            end
         })
     end
     local playerStandingArgKey = playerRace:gsub("^.", string.lower):gsub(" ", "") .. 'Distance'
     standingDistances.args[playerStandingArgKey].order = 1
-    if (playerRace == "Worgen") then
+
+    -- prioritize alternate forms
+    if (playerRace == "Worgen" or (playerRace == "Dracthyr" and UnitSex("player") == bodyType.fem)) then
         options.args.standingDistances.args.humanDistance.order = 2
+    end
+
+    if (playerRace == "Dracthyr" and UnitSex("player") == bodyType.masc) then
+        options.args.standingDistances.args.bloodElfDistance.order = 2
     end
 
     -- stand by behavior
