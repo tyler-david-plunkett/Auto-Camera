@@ -335,13 +335,13 @@ function addon:options()
                     },
                     standByBehavior = {
                         type = "select",
-                        name = "When Stand-By is activated",
+                        name = "When Stand-By Is Activated",
                         order = 4,
                         values = {
-                            view = "Zoom to view",
+                            view = "Zoom to View",
                             doNothing = "Do Nothing"
                         },
-                        desc = "Indicates if the camera should zoom to the max camera distance when Auto-Camera is on stand-by"
+                        desc = "What the camera should do when Stand-By is activated"
                     },
                     spacer = {
                         type = "header",
