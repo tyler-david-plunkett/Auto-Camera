@@ -29,7 +29,7 @@ function T.defaultSettings()
   end
 
   for race in pairs(T.set {"Dracthyr"}) do
-      defaults.global[standingArgKey(race)] =  5.3
+    defaultSettings.general[T.standingArgKey(race)] =  5.3
   end
   
   for race in pairs(T.set {"Night Elf", "Nightborne"}) do

@@ -157,12 +157,12 @@ function addon:autoZoom()
     targetZoom = settings.general[playerStandingArgKey]
 
     -- Worgen and Drakthyr Human override
-    if (set {"Human 2", "Human 1", "Visage 2"}[getPlayerModelName()] ~= nil) then
+    if (T.set {"Human 2", "Human 1", "Visage 2"}[getPlayerModelName()] ~= nil) then
         targetZoom = settings.humanDistance
     end
 
     -- Drakthyr Blood Elf override
-    if (set {"Visage 1"}[getPlayerModelName()] ~= nil) then
+    if (T.set {"Visage 1"}[getPlayerModelName()] ~= nil) then
         targetZoom = settings.humanDistance
     end
     
@@ -780,11 +780,11 @@ function addon:options()
 
     -- prioritize alternate forms
     if (playerRace == "Worgen" or (playerRace == "Dracthyr" and UnitSex("player") == bodyType.fem)) then
-        options.args.standingDistances.args.humanDistance.order = 2
+        standingDistances.args.humanDistance.order = 2
     end
 
     if (playerRace == "Dracthyr" and UnitSex("player") == bodyType.masc) then
-        options.args.standingDistances.args.bloodElfDistance.order = 2
+        standingDistances.args.bloodElfDistance.order = 2
     end
 
     -- stand by behavior
