@@ -13,7 +13,7 @@ function T.defaultSettings()
       petBattleView = 5,
       instanceEncounterView = 5,
       ridingDistance = 8.5,
-      speedMultiplier = 0.2,
+      speedMultiplier = 0.1,
       normalEnemyDistance = 4,
       eliteEnemyDistance = 4,
       raidEnemyDistance = 8,
@@ -24,8 +24,12 @@ function T.defaultSettings()
     }
   }
 
-  for race in pairs(T.set {"Worgen", "Dracthyr"}) do
+  for race in pairs(T.set {"Worgen"}) do
     defaultSettings.general[T.standingArgKey(race)] =  4.6
+  end
+
+  for race in pairs(T.set {"Dracthyr"}) do
+      defaults.global[standingArgKey(race)] =  5.3
   end
   
   for race in pairs(T.set {"Night Elf", "Nightborne"}) do

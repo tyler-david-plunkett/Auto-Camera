@@ -1,10 +1,8 @@
 local _ , race = UnitRace("player")
-local CombatTracker = 1
-local worgenFrame = CreateFrame("PlayerModel", nil, UIParent)
-local ModelFileIDs = {[1000764]="Human Female", [1011653]="Human Male"}
+local playerModelFrame = CreateFrame("PlayerModel", nil, UIParent)
+local ModelFileIDs = {[1000764]="Human 2", [1011653]="Human 1", [307454]="Worgen 1", [307453]="Worgen 2", [4220448]="Visage 2", [4207724]="Dracthyr", [4395382]="Visage 1" }
 
-function isWorgenForm()
-	worgenFrame:SetUnit("player")
-	local NDA_ModelName = worgenFrame:GetModelFileID()
-	return race ~= "Worgen" or ModelFileIDs[NDA_ModelName] == nil
+function getPlayerModelName()
+	playerModelFrame:SetUnit("player")
+	return ModelFileIDs[playerModelFrame:GetModelFileID()]
 end
