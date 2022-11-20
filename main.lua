@@ -403,13 +403,13 @@ function addon:options()
                             },
                             standByBehavior = {
                                 type = "select",
-                                name = "When Stand-By is activated",
+                                name = "When Stand-By Is Activated",
                                 order = 4,
                                 values = {
                                     view = "Zoom to view",
                                     doNothing = "Do Nothing"
                                 },
-                                desc = "Indicates if the camera should zoom to the max camera distance when Auto-Camera is on stand-by"
+                                desc = "What the camera should do when Stand-By is activated"
                             },
                             spacer = {
                                 type = "header",
@@ -471,7 +471,7 @@ function addon:options()
                             speedMultiplier = {
                                 type = 'range',
                                 name = 'Speed Multiplier',
-                                desc = 'Multiplier for addition zoom distance based on player speed',
+                                desc = 'Multiplier for additional zoom distance based on player speed',
                                 min = 0,
                                 max = 0.5,
                                 step = 0.1,
