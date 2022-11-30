@@ -530,10 +530,22 @@ function addon:options()
                         order = 1,
                         name = "General",
                         args = {
+                            cameraKeepCharacterCentered = {
+                                name = "Keep Camera Centered on Character",
+                                type = "toggle",
+                                order = 1,
+                                desc = "Keep camera centered on character. When enabled, Action Cam features will be disabled."
+                            },
+                            cameraReduceUnexpectedMovement = {
+                                name = "Reduce Unexpected Camera Movement",
+                                type = "toggle",
+                                order = 1,
+                                desc = "Reduces various unexpted camera motion effects"
+                            },
                             motionSickness = { -- todo> replace with 2 check boxes?
                                 name = "Motion Sickness",
                                 type = "select",
-                                order = 1,
+                                order = 50,
                                 values = motionSicknessSettingValues,
                                 width = "full",
                                 desc = "Must be set to Allow Dynamic Camera Movement or Reduce Camera Motion to enable Action Cam. This accessibility setting and more can be found in Game Menu > Interface > Accessibility.",
