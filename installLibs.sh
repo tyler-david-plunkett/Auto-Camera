@@ -10,6 +10,7 @@ cp -r Ace3/AceConfig-3.0 libs
 cp -r Ace3/AceDB-3.0 libs
 cp -r Ace3/AceDBOptions-3.0 libs
 cp -r Ace3/AceGUI-3.0 libs
+cp -r Ace3/AceTimer-3.0 libs
 cp -r Ace3/CallbackHandler-1.0 libs
 cp -r Ace3/LibStub libs
 
