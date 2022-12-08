@@ -1,5 +1,5 @@
 local addonName, T = ...
-AutoCamera = LibStub("AceAddon-3.0"):NewAddon(addonName)
+AutoCamera = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceTimer-3.0")
 local addon = AutoCamera
 local STAND_BY = false
 local IN_PET_BATTLE = false
@@ -7,6 +7,7 @@ local IN_ENCOUNTER = false
 local IN_BARBER_SHOP = false
 local IN_RAID = false
 local IN_DUNGEON = false
+local STAND_BY_BEHAVIOR_HANDLED = true
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
 local previousSettings = {general = nil, actionCam = nil, actionCamGroups = {}} -- stores the previous settings when defaults are applied by the user
@@ -14,6 +15,8 @@ local playerRace = UnitRace("player")
 local showOtherRaces = false
 local races = T.set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera", "Dracthyr"}
 local bodyType = {neutral=1, masc=2, fem=3}
+local humanShapeShifters = T.set {"Human 2", "Human 1", "Visage 2"}
+local bloodElfShapeShifters = T.set {"Visage 1"}
 races[playerRace] = true -- adds player race if it's missing from race set
 local maxZoomDistance = 50
 local xpac = tonumber(string.match(GetBuildInfo(), "([0-9]+)\..*"))
@@ -66,8 +69,12 @@ end
 BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
 BINDING_NAME_TOGGLE_STAND_BY = "Toggle Stand-By Mode"
 
+function addon:OnEnable()
+    self:ScheduleRepeatingTimer("autoZoom", 0.1)
+end
+
 function addon:isRunning() 
-    return 
+    return
         not STAND_BY and
         not IN_ENCOUNTER and
         not IN_PET_BATTLE and
@@ -148,21 +155,53 @@ function addon:exitStandBy()
 end
 
 function addon:autoZoom()
+    if (not addon:isRunning()) then
+        if (not STAND_BY_BEHAVIOR_HANDLED) then
+            MoveViewInStop()
+            MoveViewOutStop()
+            if STAND_BY then
+                if (settings.general.standByBehavior == "view") then
+                    SetView(settings.general.manualStandByView)
+                elseif (settings.general.standByBehavior == "maxDistance") then
+                    CameraZoomOut(maxZoomDistance)
+                end
+            elseif IN_ENCOUNTER then
+                if (settings.general.standByBehavior == "view") then
+                    SetView(settings.general.instanceEncounterView)
+                elseif (settings.general.standByBehavior == "maxDistance") then
+                    CameraZoomOut(maxZoomDistance)
+                end
+            elseif IN_PET_BATTLE then
+                if (settings.general.standByBehavior == "view") then
+                    SetView(settings.general.petBattleView)
+                elseif (settings.general.standByBehavior == "maxDistance") then
+                    CameraZoomOut(maxZoomDistance)
+                end
+            end
+    
+            STAND_BY_BEHAVIOR_HANDLED = true
+        end
+
+        return
+    end
+
     local targetZoom
     local currentCameraZoom = GetCameraZoom()
     local unit
     local enemyCount = 0
     local currentSpeed, runSpeed, flightSpeed, swimSpeed = GetUnitSpeed("player")
 
+    STAND_BY_BEHAVIOR_HANDLED = false
+
     targetZoom = settings.general[playerStandingArgKey]
 
     -- Worgen and Drakthyr Human override
-    if (T.set {"Human 2", "Human 1", "Visage 2"}[getPlayerModelName()] ~= nil) then
+    if (humanShapeShifters[getPlayerModelName()] ~= nil) then
         targetZoom = settings.humanDistance
     end
 
     -- Drakthyr Blood Elf override
-    if (T.set {"Visage 1"}[getPlayerModelName()] ~= nil) then
+    if (bloodElfShapeShifters[getPlayerModelName()] ~= nil) then
         targetZoom = settings.humanDistance
     end
     
@@ -208,32 +247,6 @@ function addon:autoZoom()
     else
         MoveViewInStop()
         MoveViewOutStop()
-    end
-
-    if (addon:isRunning()) then
-        C_Timer.After(deltaTime, function() addon:autoZoom() end)
-    else
-        MoveViewInStop()
-        MoveViewOutStop()
-        if STAND_BY then
-            if (settings.general.standByBehavior == "view") then
-                SetView(settings.general.manualStandByView)
-            elseif (settings.general.standByBehavior == "maxDistance") then
-                CameraZoomOut(maxZoomDistance)
-            end
-        elseif IN_ENCOUNTER then
-            if (settings.general.standByBehavior == "view") then
-                SetView(settings.general.instanceEncounterView)
-            elseif (settings.general.standByBehavior == "maxDistance") then
-                CameraZoomOut(maxZoomDistance)
-            end
-        elseif IN_PET_BATTLE then
-            if (settings.general.standByBehavior == "view") then
-                SetView(settings.general.petBattleView)
-            elseif (settings.general.standByBehavior == "maxDistance") then
-                CameraZoomOut(maxZoomDistance)
-            end
-        end
     end
 
     previousCameraZoom = currentCameraZoom
