@@ -31,11 +31,6 @@ local xpacs = {
     boa = 8,
     sl = 9
 }
-local motionSicknessSettingValues = {}
-motionSicknessSettingValues[1] = "Keep Character Centered"
-motionSicknessSettingValues[2] = "Reduce Camera Motion"
-motionSicknessSettingValues[3] = "Keep Character Centered and Reduce Camera Motion"
-motionSicknessSettingValues[0] = "Allow Dynamic Camera Movement"
 
 local function enemyArgKey(unit)
     local enemyType
@@ -544,37 +539,26 @@ function addon:options()
                         name = "General",
                         args = {
                             cameraKeepCharacterCentered = {
-                                name = "Keep Camera Centered on Character",
+                                name = "Keep Character Centered",
                                 type = "toggle",
                                 order = 1,
-                                desc = "Keep camera centered on character. When enabled, Action Cam features will be disabled."
+                                width = "full",
+                                set = function(info, value)
+                                    C_CVar.SetCVar("CameraKeepCharacterCentered", value and "1" or "0")
+                                end,
+                                get = addon.cameraCharacterCenteringEnabled,
+                                desc = "Keep character centered in camera view. When enabled, Action Cam features will be disabled."
                             },
                             cameraReduceUnexpectedMovement = {
-                                name = "Reduce Unexpected Camera Movement",
+                                name = "Reduce Camera Motion",
                                 type = "toggle",
                                 order = 1,
-                                desc = "Reduces various unexpted camera motion effects"
-                            },
-                            motionSickness = { -- todo> replace with 2 check boxes?
-                                name = "Motion Sickness",
-                                type = "select",
-                                order = 50,
-                                values = motionSicknessSettingValues,
                                 width = "full",
-                                desc = "Must be set to Allow Dynamic Camera Movement or Reduce Camera Motion to enable Action Cam. This accessibility setting and more can be found in Game Menu > Interface > Accessibility.",
                                 set = function(info, value)
-                                    SetCVar("CameraKeepCharacterCentered", (value == 1 or value == 3) and "1" or "0")
-                                    SetCVar("CameraReduceUnexpectedMovement", (value == 2 or value == 3) and "1" or "0")
-
-                                    if (addon:cameraCharacterCenteringEnabled()) then
-                                        ConsoleExec("ActionCam off")
-                                    else
-                                        addon:applyActionCamSettings()
-                                    end
+                                    C_CVar.SetCVar("CameraReduceUnexpectedMovement", value and "1" or "0")
                                 end,
-                                get = function()
-                                    return ((GetCVar("CameraKeepCharacterCentered") == "1" and 1 or 0) + (GetCVar("CameraReduceUnexpectedMovement") == "1" and 2 or 0))
-                                end
+                                get = function() return C_CVar.GetCVar("CameraReduceUnexpectedMovement") == "1" end,
+                                desc = "Reduces various unexpted camera motion effects"
                             },
                             suppressExperimentalCVarPrompt = {
                                 type = "toggle",
@@ -604,7 +588,7 @@ function addon:options()
                                 type = "execute",
                                 order = 2,
                                 width = "double",
-                                name = "Disable Camera Character Centering",
+                                name = "Disable Character Centering",
                                 func = function()
                                     C_CVar.SetCVar("CameraKeepCharacterCentered", "0")
                                     addon:applyActionCamSettings()
@@ -613,7 +597,7 @@ function addon:options()
                             message3 = {
                                 type = "description",
                                 order = 3,
-                                name = "which is enabled by default to prevent motion sickness in some users."
+                                name = "which is enabled by default to prevent motion sickness in some users. This setting can also be toggled in the General section above or with Options > Game > Accessibility > General > Motion Sickness."
                             }
                         }
                     },
