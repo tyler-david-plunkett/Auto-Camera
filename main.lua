@@ -567,15 +567,34 @@ function addon:options()
                                 name = "Suppress Expirimental Feature Prompt",
                                 desc = "This will remove the warning on load when Action Cam is enabled."
                             },
-                            overShoulder = {
+                            -- overShoulder = {
+                            --     softMax = 2,
+                            --     width = "full"
+                            -- }
+                        }
+                    },
+                    overShoulder = {
+                        type = "group",
+                        name = "Over the Shoulder",
+                        order = 2,
+                        inline = true,
+                        hidden = addon.cameraCharacterCenteringEnabled,
+                        args = {
+                            [""] = {
+                                type = "range",
+                                name = "Over the Shoulder",
+                                max = 2,
                                 softMax = 2,
+                                min = -2,
+                                softMin = -2,
+                                width = "full"
                             }
                         }
                     },
                     motionSicknessMessage = {
                         type = "group",
                         name = "Action Cam Disabled",
-                        order = 2,
+                        order = 3,
                         inline = true,
                         hidden = addon.cameraCharacterCenteringDisabled,
                         args = {
@@ -606,7 +625,7 @@ function addon:options()
                         name = "Dynamic Pitch",
                         hidden = addon.cameraCharacterCenteringEnabled,
                         inline = true,
-                        order = 2,
+                        order = 3,
                         args = {
                             [""] = {
                                 type = "toggle",
@@ -633,6 +652,12 @@ function addon:options()
                                 step = 0.01,
                                 softMax = 1
                             },
+                            smartPivotCutoffDist = {
+                                name = "Smart Pivot Cutoff Distance",
+                                step = 0.01,
+                                softMax = 50,
+                                max = 50
+                            },
                             toggleDefaults = toggleGroupDefaultsOption('dynamicPitch')
                         }
                     },
@@ -641,7 +666,7 @@ function addon:options()
                         name = "Head Movement",
                         hidden = addon.cameraCharacterCenteringEnabled,
                         inline = true,
-                        order = 3,
+                        order = 4,
                         args = {
                             strength = {
                                 order = 1,
@@ -664,7 +689,7 @@ function addon:options()
                         name = "Target Focus",
                         hidden = addon.cameraCharacterCenteringEnabled,
                         inline = true,
-                        order = 4,
+                        order = 5,
                         args = {
                             enemyEnable = {
                                 type = "toggle"
