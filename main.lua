@@ -150,6 +150,13 @@ function addon:exitStandBy()
 end
 
 function addon:autoZoom()
+    print(
+        T.playerModelFrame:GetCameraDistance(),
+        T.playerModelFrame:GetCameraPosition(),
+        T.playerModelFrame:GetModelScale(),
+        T.playerModelFrame:GetPosition(),
+        T.playerModelFrame:GetWorldScale()
+    ) -- todo> remove
     if (not addon:isRunning()) then
         if (not STAND_BY_BEHAVIOR_HANDLED) then
             MoveViewInStop()
