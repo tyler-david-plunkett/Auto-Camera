@@ -531,7 +531,7 @@ function addon:options()
             actionCam = {
                 type = 'group',
                 name = 'Action Cam',
-                desc = 'This is an experimental feature of the base game that pairs well with Auto-Camera. This tab simply provides a convenient interface for configuration.',
+                desc = 'Action Cam is an experimental feature included in the base game. This addon simply provides a convenient interface for configuration.',
                 order = 2,
                 set = function(info, value)
                     previousSettings.actionCam = nil
@@ -574,10 +574,6 @@ function addon:options()
                                 name = "Suppress Expirimental Feature Prompt",
                                 desc = "This will remove the warning on load when Action Cam is enabled."
                             },
-                            -- overShoulder = {
-                            --     softMax = 2,
-                            --     width = "full"
-                            -- }
                         }
                     },
                     overShoulder = {
@@ -594,8 +590,9 @@ function addon:options()
                                 softMax = 2,
                                 min = -2,
                                 softMin = -2,
-                                width = "full"
-                            }
+                                width = "double"
+                            },
+                            toggleDefaults = toggleGroupDefaultsOption('overShoulder')
                         }
                     },
                     motionSicknessMessage = {
@@ -643,27 +640,27 @@ function addon:options()
                                 name = "Base FoV Pad",
                                 order = 2,
                                 step = 0.01,
-                                softMax = 0.99, -- todo: remove
+                                softMax = 0.99,
                                 min = 0.01,
-                                softMin = 0.01 -- todo: remove
+                                softMin = 0.01
                             },
                             baseFovPadFlying = {
                                 name = "Flying Base FoV Pad",
                                 step = 0.01,
-                                softMax = 0.99, -- todo: remove
+                                softMax = 0.99,
                                 min = 0.01,
-                                softMin = 0.01, -- todo: remove
+                                softMin = 0.01
                             },
                             baseFovPadDownScale = {
                                 name = "Base FoV Down Scale",
                                 step = 0.01,
-                                softMax = 1
+                                softMax = 0.99
                             },
                             smartPivotCutoffDist = {
                                 name = "Smart Pivot Cutoff Distance",
                                 step = 0.01,
                                 softMax = 50,
-                                max = 50
+                                max = 50,
                             },
                             toggleDefaults = toggleGroupDefaultsOption('dynamicPitch')
                         }
@@ -679,11 +676,24 @@ function addon:options()
                                 order = 1,
                                 softMax = 4
                             },
+                            deadZone = {
+                                softMax = 1,
+                                step = 0.01,
+                            },
                             firstPersonDampRate = {
+                                min = 1,
                                 softMax = 50
+                            },
+                            movingStrength = {
+                                order = 3,
+                                softMax = 4
                             },
                             movingDampRate = {
                                 softMax = 50
+                            },
+                            standingStrength = {
+                                order = 6,
+                                softMax = 4
                             },
                             standingDampRate = {
                                 softMax = 30
