@@ -670,7 +670,7 @@ function addon:options()
                                 softMax = 4
                             },
                             deadZone = {
-                                softMax = 1;
+                                softMax = 1,
                                 step = 0.01,
                             },
                             firstPersonDampRate = {
