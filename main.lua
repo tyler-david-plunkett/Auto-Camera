@@ -669,11 +669,24 @@ function addon:options()
                                 order = 1,
                                 softMax = 4
                             },
+                            deadZone = {
+                                softMax = 1;
+                                step = 0.01,
+                            },
                             firstPersonDampRate = {
+                                min = 1,
                                 softMax = 50
+                            },
+                            movingStrength = {
+                                order = 3,
+                                softMax = 4
                             },
                             movingDampRate = {
                                 softMax = 50
+                            },
+                            standingStrength = {
+                                order = 6,
+                                softMax = 4
                             },
                             standingDampRate = {
                                 softMax = 30
