@@ -114,7 +114,7 @@ function addon:OnInitialize()
 
     -- disable experimental feature prompt if configured
     if (settings.actionCam.suppressExperimentalCVarPrompt) then
-        UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED") -- todo> reenable?
+        UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED")
     end
 
     -- apply action cam settings
@@ -537,7 +537,7 @@ function addon:options()
                         type = "group",
                         inline = true,
                         order = 1,
-                        name = "General",
+                        name = "Related",
                         args = {
                             cameraKeepCharacterCentered = {
                                 name = "Keep Character Centered",
