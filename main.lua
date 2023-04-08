@@ -291,7 +291,8 @@ local function toggleGroupDefaultsOption(group)
         func = function()
             addon:toggleActionCamGroupDefaults(group)
         end,
-        order = 99
+        order = 99,
+        desc = "Apply Blizzard defaults for all " .. string.lower(T.splitCamelCase(group)) .. " values."
     }
 end
 
@@ -669,27 +670,37 @@ function addon:options()
                                 order = 1,
                                 softMax = 4
                             },
-                            deadZone = {
-                                softMax = 1,
-                                step = 0.01,
-                            },
-                            firstPersonDampRate = {
-                                min = 1,
-                                softMax = 50
+                            standingStrength = {
+                                order = 2,
+                                softMax = 4
                             },
                             movingStrength = {
                                 order = 3,
                                 softMax = 4
                             },
-                            movingDampRate = {
+                            firstPersonDampRate = {
+                                order = 4,
+                                min = 1,
                                 softMax = 50
                             },
-                            standingStrength = {
-                                order = 6,
-                                softMax = 4
-                            },
                             standingDampRate = {
-                                softMax = 30
+                                order = 5,
+                                min = 1,
+                                softMax = 50
+                            },
+                            movingDampRate = {
+                                order = 6,
+                                min = 1,
+                                softMax = 50
+                            },
+                            deadZone = {
+                                order = 7,
+                                softMax = 50,
+                                desc = "This option doesn't apply immediately (possibly a bug in the base game). Mounting or reloading will trigger application.",
+                            },
+                            rangeScale = {
+                                order = 8,
+                                softMax = 50,
                             },
                             toggleDefaults = toggleGroupDefaultsOption('headMovement')
                         }
