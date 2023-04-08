@@ -525,7 +525,7 @@ function addon:options()
             actionCam = {
                 type = 'group',
                 name = 'Action Cam',
-                desc = 'Action Cam is an experimental feature included in the base game. This addon simply provides a convenient interface for configuration.',
+                desc = 'Action Cam is an experimental feature included in the base game. This tab simply provides a convenient interface for configuration.',
                 order = 2,
                 set = function(info, value)
                     previousSettings.actionCam = nil
