@@ -713,10 +713,28 @@ function addon:options()
                         order = 5,
                         args = {
                             enemyEnable = {
+                                order = 1,
                                 type = "toggle"
                             },
+                            enemyStrengthPitch = {
+                                order = 2,
+                                softMax = 1,
+                            },
+                            enemyStrengthYaw = {
+                                order = 3,
+                                softMax = 1,
+                            },
                             interactEnable = {
+                                order = 4,
                                 type = "toggle"
+                            },
+                            interactStrengthPitch = {
+                                order = 5,
+                                softMax = 1,
+                            },
+                            interactStrengthYaw = {
+                                order = 6,
+                                softMax = 1,
                             },
                             toggleDefaults = toggleGroupDefaultsOption('targetFocus')
                         }
