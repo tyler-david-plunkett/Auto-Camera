@@ -9,7 +9,7 @@ A World of Warcraft addon that automates and augments the camera's functionality
     - Auto-Camera enters Stand-By automatically for the duration of some events (e.g. boss encounters and pet battles).<br/>
 
 <h2>Action Cam Interface</h2>
-- Provides an settings interface for the base game's experimental Action Cam feature.<br/>
+- Provides a settings interface for the base game's experimental Action Cam feature.<br/>
 
 <h2>Slash Commands</h2>
 /ac &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspdisplay console command options<br/>
