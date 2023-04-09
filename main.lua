@@ -292,7 +292,7 @@ local function toggleGroupDefaultsOption(group)
             addon:toggleActionCamGroupDefaults(group)
         end,
         order = 99,
-        desc = "Apply Blizzard defaults for all " .. string.lower(T.splitCamelCase(group)) .. " values."
+        desc = "Apply Blizzard defaults for this group"
     }
 end
 
@@ -696,7 +696,7 @@ function addon:options()
                             deadZone = {
                                 order = 7,
                                 softMax = 50,
-                                desc = "This option doesn't apply immediately (possibly a bug in the base game). Mounting or reloading will trigger application.",
+                                desc = "This option doesn't apply immediately (possibly a bug in the base game), but mounting or reloading will trigger application",
                             },
                             rangeScale = {
                                 order = 8,
