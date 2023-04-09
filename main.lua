@@ -120,11 +120,6 @@ function addon:OnInitialize()
         UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED")
     end
 
-    -- apply action cam settings
-    if (addon:cameraCharacterCenteringDisabled()) then
-        addon:applyActionCamSettings()
-    end
-
     if (not STAND_BY) then
         addon:autoZoom()
     end
@@ -900,6 +895,13 @@ local function OnEvent(self, event, ...)
     addon[event](self, event, ...)
 end
 
+function addon:VARIABLES_LOADED()
+    -- apply action cam settings
+    if (addon:cameraCharacterCenteringDisabled()) then
+        addon:applyActionCamSettings()
+    end
+end
+
 function addon:PET_BATTLE_OPENING_START()
     IN_PET_BATTLE = true
 end
@@ -947,7 +949,7 @@ end
 
 local f = CreateFrame("Frame")
 
-local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD"}
+local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD", "VARIABLES_LOADED"}
 local wrathEvents = T.set {"BARBER_SHOP_OPEN", "BARBER_SHOP_CLOSE"}
 
 for event in pairs(classicEvents) do
