@@ -79,7 +79,6 @@ end
 function addon:loadSettings()
     settings = addon.db.global
 
-    -- todo: test settings update
     -- update settings if necessary
     if (settings.version ~= T.version) then
         addon:updateSettings(settings)
@@ -91,9 +90,13 @@ function addon:updateSettings(settings)
     settings.version = settings.version or "0.0.0"
 
     for updateVersion, updateFunction in pairs(settingsUpdateMap) do
+        -- run version structure conversion
         if (updateVersion > settings.version) then
             updateFunction(settings)
         end
+
+        -- update version
+        settings.version = updateVersion
     end
 
     T.deepMerge(settings, T.deepMerge(T.defaultSettings(), settings, true))
@@ -361,7 +364,7 @@ function addon:options()
         args = {
             general = {
                 type = 'group',
-                name = 'General',
+                name = 'Zoom',
                 order = 1,
                 set = function(info, value)
                     previousSettings.general = nil
@@ -524,7 +527,7 @@ function addon:options()
             },
             actionCam = {
                 type = 'group',
-                name = 'Action Cam',
+                name = 'Action',
                 desc = 'Action Cam is an experimental feature included in the base game. This tab simply provides a convenient interface for configuration.',
                 order = 2,
                 set = function(info, value)
