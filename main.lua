@@ -79,7 +79,6 @@ end
 function addon:loadSettings()
     settings = addon.db.global
 
-    -- todo: test settings update
     -- update settings if necessary
     if (settings.version ~= T.version) then
         addon:updateSettings(settings)
@@ -91,9 +90,13 @@ function addon:updateSettings(settings)
     settings.version = settings.version or "0.0.0"
 
     for updateVersion, updateFunction in pairs(settingsUpdateMap) do
+        -- run version structure conversion
         if (updateVersion > settings.version) then
             updateFunction(settings)
         end
+
+        -- update version
+        settings.version = updateVersion
     end
 
     T.deepMerge(settings, T.deepMerge(T.defaultSettings(), settings, true))
@@ -114,12 +117,7 @@ function addon:OnInitialize()
 
     -- disable experimental feature prompt if configured
     if (settings.actionCam.suppressExperimentalCVarPrompt) then
-        UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED") -- todo> reenable?
-    end
-
-    -- apply action cam settings
-    if (addon:cameraCharacterCenteringDisabled()) then
-        addon:applyActionCamSettings()
+        UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED")
     end
 
     if (not STAND_BY) then
@@ -298,7 +296,8 @@ local function toggleGroupDefaultsOption(group)
         func = function()
             addon:toggleActionCamGroupDefaults(group)
         end,
-        order = 99
+        order = 99,
+        desc = "Apply Blizzard defaults for this group"
     }
 end
 
@@ -367,7 +366,7 @@ function addon:options()
         args = {
             general = {
                 type = 'group',
-                name = 'General',
+                name = 'Zoom',
                 order = 1,
                 set = function(info, value)
                     previousSettings.general = nil
@@ -530,8 +529,8 @@ function addon:options()
             },
             actionCam = {
                 type = 'group',
-                name = 'Action Cam',
-                desc = 'Action Cam is an experimental feature included in the base game. This addon simply provides a convenient interface for configuration.',
+                name = 'Action',
+                desc = 'Action Cam is an experimental feature included in the base game. This tab simply provides a convenient interface for configuration.',
                 order = 2,
                 set = function(info, value)
                     previousSettings.actionCam = nil
@@ -543,7 +542,7 @@ function addon:options()
                         type = "group",
                         inline = true,
                         order = 1,
-                        name = "General",
+                        name = "Related",
                         args = {
                             cameraKeepCharacterCentered = {
                                 name = "Keep Character Centered",
@@ -676,27 +675,37 @@ function addon:options()
                                 order = 1,
                                 softMax = 4
                             },
-                            deadZone = {
-                                softMax = 1,
-                                step = 0.01,
-                            },
-                            firstPersonDampRate = {
-                                min = 1,
-                                softMax = 50
+                            standingStrength = {
+                                order = 2,
+                                softMax = 4
                             },
                             movingStrength = {
                                 order = 3,
                                 softMax = 4
                             },
-                            movingDampRate = {
+                            firstPersonDampRate = {
+                                order = 4,
+                                min = 1,
                                 softMax = 50
                             },
-                            standingStrength = {
-                                order = 6,
-                                softMax = 4
-                            },
                             standingDampRate = {
-                                softMax = 30
+                                order = 5,
+                                min = 1,
+                                softMax = 50
+                            },
+                            movingDampRate = {
+                                order = 6,
+                                min = 1,
+                                softMax = 50
+                            },
+                            deadZone = {
+                                order = 7,
+                                softMax = 50,
+                                desc = "This option doesn't apply immediately (possibly a bug in the base game), but mounting or reloading will trigger application",
+                            },
+                            rangeScale = {
+                                order = 8,
+                                softMax = 50,
                             },
                             toggleDefaults = toggleGroupDefaultsOption('headMovement')
                         }
@@ -709,10 +718,28 @@ function addon:options()
                         order = 5,
                         args = {
                             enemyEnable = {
+                                order = 1,
                                 type = "toggle"
                             },
+                            enemyStrengthPitch = {
+                                order = 2,
+                                softMax = 1,
+                            },
+                            enemyStrengthYaw = {
+                                order = 3,
+                                softMax = 1,
+                            },
                             interactEnable = {
+                                order = 4,
                                 type = "toggle"
+                            },
+                            interactStrengthPitch = {
+                                order = 5,
+                                softMax = 1,
+                            },
+                            interactStrengthYaw = {
+                                order = 6,
+                                softMax = 1,
                             },
                             toggleDefaults = toggleGroupDefaultsOption('targetFocus')
                         }
@@ -875,6 +902,13 @@ local function OnEvent(self, event, ...)
     addon[event](self, event, ...)
 end
 
+function addon:VARIABLES_LOADED()
+    -- apply action cam settings
+    if (addon:cameraCharacterCenteringDisabled()) then
+        addon:applyActionCamSettings()
+    end
+end
+
 function addon:PET_BATTLE_OPENING_START()
     IN_PET_BATTLE = true
 end
@@ -922,7 +956,7 @@ end
 
 local f = CreateFrame("Frame")
 
-local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD"}
+local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD", "VARIABLES_LOADED"}
 local wrathEvents = T.set {"BARBER_SHOP_OPEN", "BARBER_SHOP_CLOSE"}
 
 for event in pairs(classicEvents) do

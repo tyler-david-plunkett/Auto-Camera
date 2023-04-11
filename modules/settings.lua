@@ -71,5 +71,4 @@ settingsUpdateMap['0.2.0'] = function(settings)
   end
 
   settings.general = general
-  settings.version = '0.2.0'
 end
