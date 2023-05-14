@@ -12,12 +12,6 @@ local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
 local previousSettings = {general = nil, actionCam = nil, actionCamGroups = {}} -- stores the previous settings when defaults are applied by the user
 local playerRace = UnitRace("player")
-local showOtherRaces = false
-local races = T.set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera", "Dracthyr"}
-local bodyType = {neutral=1, masc=2, fem=3}
-local humanShapeShifters = T.set {"Human 2", "Human 1", "Visage 2"}
-local bloodElfShapeShifters = T.set {"Visage 1"}
-races[playerRace] = true -- adds player race if it's missing from race set
 local maxZoomDistance = 50
 local xpac = tonumber(string.match(GetBuildInfo(), "([0-9]+)\..*"))
 local xpacs = {
@@ -51,8 +45,6 @@ local function enemyArgKey(unit)
     
     return enemyType .. "EnemyDistance"
 end
-
-local playerStandingArgKey = T.standingArgKey(playerRace)
 
 local settings = T.defaultSettings()
 local units = {}
@@ -148,13 +140,6 @@ function addon:exitStandBy()
 end
 
 function addon:autoZoom()
-    print(
-        T.playerModelFrame:GetCameraDistance(),
-        T.playerModelFrame:GetCameraPosition(),
-        T.playerModelFrame:GetModelScale(),
-        T.playerModelFrame:GetPosition(),
-        T.playerModelFrame:GetWorldScale()
-    ) -- todo> remove
     if (not addon:isRunning()) then
         if (not STAND_BY_BEHAVIOR_HANDLED) then
             MoveViewInStop()
@@ -193,17 +178,16 @@ function addon:autoZoom()
 
     STAND_BY_BEHAVIOR_HANDLED = false
 
-    targetZoom = settings.general[playerStandingArgKey]
+    local prevTargetZoom = targetZoom
+    
+    -- get default camera position when displaying the player's model
+    local x, y, z = T.playerModelFrame:GetCameraPosition()
 
-    -- Worgen and Drakthyr Human override
-    if (humanShapeShifters[getPlayerModelName()] ~= nil) then
-        targetZoom = settings.humanDistance
-    end
+    -- set default z value when model is not loaded
+    if (z == 0) then z = .5 end
 
-    -- Drakthyr Blood Elf override
-    if (bloodElfShapeShifters[getPlayerModelName()] ~= nil) then
-        targetZoom = settings.humanDistance
-    end
+    -- use best-fit curve function to estimate zoom distance based on model frame default camera z position
+    targetZoom = ((math.log(z - 0.2)/math.log(10)) * 4) + 5.5
     
     if (
         AuraUtil.FindAuraByName("Running Wild", "player") == nil and
@@ -449,26 +433,6 @@ function addon:options()
                                 order = 8,
                                 hidden = function() return settings.general.standByBehavior ~= "view" end
                             })
-                        }
-                    },
-                    standingDistances = {
-                        type = "group",
-                        inline = true,
-                        order = 2,
-                        name = "Minimum Camera Distances by Race",
-                        args = {
-                            toggleHidden = {
-                                type = "execute",
-                                name = function()
-                                    if showOtherRaces then
-                                        return "Show Fewer Races"
-                                    else
-                                        return "Show More Races"
-                                    end
-                                end,
-                                func = function() showOtherRaces = not showOtherRaces end,
-                                order = 99
-                            }
                         }
                     },
                     contextualDistances = {
@@ -828,41 +792,6 @@ function addon:options()
             },
             actionCamArgs[groupName].args[var] or {}
         )
-    end
-
-    -- standing distances
-    local standingDistances = options.args.general.args.standingDistances
-    for race in pairs(races) do
-        standingDistances.args[T.standingArgKey(race)] = T.merge(distanceOption(), {
-            name = race,
-            hidden = function()
-                -- show all when Show Other Races is selected
-                if (showOtherRaces) then return false end
-
-                -- show current race
-                if (playerRace == race) then return false end
-
-                -- show Human if player is Worgen or Femanin Dracthry
-                if (race == "Human" and (playerRace == "Worgen" or (playerRace == "Dracthyr" and UnitSex("player") == bodyType.fem))) then return false end
-
-                -- show Blood Elf if player is Masculine Dracthry
-                if (race == "Blood Elf" and (playerRace == "Dracthyr" and UnitSex("player") == bodyType.masc)) then return false end
-
-                -- otherwise hide
-                return true
-            end
-        })
-    end
-    local playerStandingArgKey = playerRace:gsub("^.", string.lower):gsub(" ", "") .. 'Distance'
-    standingDistances.args[playerStandingArgKey].order = 1
-
-    -- prioritize alternate forms
-    if (playerRace == "Worgen" or (playerRace == "Dracthyr" and UnitSex("player") == bodyType.fem)) then
-        standingDistances.args.humanDistance.order = 2
-    end
-
-    if (playerRace == "Dracthyr" and UnitSex("player") == bodyType.masc) then
-        standingDistances.args.bloodElfDistance.order = 2
     end
 
     -- stand by behavior
