@@ -26,6 +26,18 @@ local xpacs = {
     sl = 9
 }
 
+local function logFrameCamPosZToWorldZoom(z)
+    return ((math.log(z - 0.2)/math.log(10)) * 4) + 5.5
+end
+
+local function logFrameCamPosWorldZoom(x, y, z)
+    return ((math.log(math.sqrt((x*x) + (y*y) + (z*z)) - 0.2)/math.log(10)) * 4) + 5.5
+end
+
+local function linearFrameCamPosMagToWorldZoom(x, y, z)
+    return math.sqrt((x*x) + (y*y) + (z*z)) * 1.7 + 0.5
+end
+
 local function enemyArgKey(unit)
     local enemyType
 	if (
@@ -111,10 +123,6 @@ function addon:OnInitialize()
     if (settings.actionCam.suppressExperimentalCVarPrompt) then
         UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED")
     end
-
-    if (not STAND_BY) then
-        addon:autoZoom()
-    end
 end
 
 -- helper functions
@@ -180,14 +188,8 @@ function addon:autoZoom()
 
     local prevTargetZoom = targetZoom
     
-    -- get default camera position when displaying the player's model
-    local x, y, z = T.playerModelFrame:GetCameraPosition()
-
-    -- set default z value when model is not loaded
-    if (z == 0) then z = .5 end
-
-    -- use best-fit curve function to estimate zoom distance based on model frame default camera z position
-    targetZoom = ((math.log(z - 0.2)/math.log(10)) * 4) + 5.5
+    -- use best-fit curve function to estimate zoom distance based on model frame default camera position
+    targetZoom = linearFrameCamPosMagToWorldZoom(T.playerModelFrame:GetCameraPosition())
     
     if (
         AuraUtil.FindAuraByName("Running Wild", "player") == nil and
@@ -199,7 +201,6 @@ function addon:autoZoom()
 
     targetZoom = targetZoom + currentSpeed * settings.general.speedMultiplier
 
-    local enemyPackDistance = targetZoom
     for i, unit in ipairs(units) do
         local unitClassification = UnitClassification(unit)
         local unitLevel = UnitLevel(unit)
@@ -209,11 +210,11 @@ function addon:autoZoom()
             CheckInteractDistance(unit, 1) and
             (unit == 'target' or UnitGUID('target') ~= UnitGUID(unit)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
         ) then
-            enemyPackDistance = enemyPackDistance + settings.general[enemyArgKey(unit)]
+            T.targetModelFrame:SetUnit(unit)
+            local unitDistance = linearFrameCamPosMagToWorldZoom(T.targetModelFrame:GetCameraPosition())
+            targetZoom = targetZoom + unitDistance
         end
     end
-
-    if (targetZoom < enemyPackDistance) then targetZoom = enemyPackDistance end
 
     local distanceDiff = targetZoom - currentCameraZoom
     
@@ -883,9 +884,24 @@ function addon:BARBER_SHOP_CLOSE()
     end
 end
 
+function addon:ADDON_LOADED()
+    T.playerModelFrame = CreateFrame("PlayerModel", nil, UIParent)
+    T.targetModelFrame = CreateFrame("PlayerModel", nil, UIParent)
+
+    T.playerModelFrame:SetUnit("player")
+    T.playerModelFrame:SetScript("OnEvent", function(self)
+        self:SetUnit("player")
+    end)
+    T.playerModelFrame:RegisterUnitEvent("UNIT_PORTRAIT_UPDATE", "player")
+
+    if (not STAND_BY) then
+        addon:autoZoom()
+    end
+end
+
 local f = CreateFrame("Frame")
 
-local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD", "VARIABLES_LOADED"}
+local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD", "VARIABLES_LOADED", "ADDON_LOADED"}
 local wrathEvents = T.set {"BARBER_SHOP_OPEN", "BARBER_SHOP_CLOSE"}
 
 for event in pairs(classicEvents) do
