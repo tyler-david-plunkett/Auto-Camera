@@ -815,7 +815,7 @@ SlashCmdList["AC"] = function(arg)
         addon:enterStandBy()
     elseif (arg == "resume") then
         addon:exitStandBy()
-    elseif (arg == "settings") then
+    elseif (arg == "settings" or arg == "options") then
         SettingsPanel:Open()
         InterfaceOptionsFrame_OpenToCategory("Auto-Camera")
     else
