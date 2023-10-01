@@ -816,7 +816,7 @@ SlashCmdList["AC"] = function(arg)
     elseif (arg == "resume") then
         addon:exitStandBy()
     elseif (arg == "settings") then
-        InterfaceOptionsFrame_Show()
+        SettingsPanel:Open()
         InterfaceOptionsFrame_OpenToCategory("Auto-Camera")
     else
         print(colorStart .. yellow .. "Auto-Camera console commands:" .. colorEnd)
