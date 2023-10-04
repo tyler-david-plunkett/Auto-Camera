@@ -38,26 +38,6 @@ local function linearFrameCamPosMagToWorldZoom(x, y, z)
     return math.sqrt((x*x) + (y*y) + (z*z)) * 1.7 + 0.5
 end
 
-local function enemyArgKey(unit)
-    local enemyType
-	if (
-		(unitClassification == "worldboss" or
-		(unitClassification == "elite" and UnitLevel(unit) == -1))
-	) then
-        enemyType = "boss"
-    elseif (IN_RAID or IN_DUNGEON) then
-        enemyType = "raid"
-	elseif (
-		unitClassification == "elite"
-	) then
-		enemyType = "elite"
-	else
-		enemyType = "normal"
-    end
-    
-    return enemyType .. "EnemyDistance"
-end
-
 local settings = T.defaultSettings()
 local units = {}
 units[1] = 'target'
@@ -204,15 +184,20 @@ function addon:autoZoom()
     for i, unit in ipairs(units) do
         local unitClassification = UnitClassification(unit)
         local unitLevel = UnitLevel(unit)
+        
         if (
             not UnitIsDead(unit) and
             UnitCanAttack("player", unit) and
             CheckInteractDistance(unit, 1) and
             (unit == 'target' or UnitGUID('target') ~= UnitGUID(unit)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
         ) then
-            T.targetModelFrame:SetUnit(unit)
-            local unitDistance = linearFrameCamPosMagToWorldZoom(T.targetModelFrame:GetCameraPosition())
-            targetZoom = targetZoom + unitDistance
+            if (unitClassification == "worldboss") then
+                targetZoom = targetZoom + settings.general.bossEnemyDistance
+            else
+                T.targetModelFrame:SetUnit(unit)
+                local unitDistance = linearFrameCamPosMagToWorldZoom(T.targetModelFrame:GetCameraPosition())
+                targetZoom = targetZoom + unitDistance
+            end
         end
     end
 
@@ -456,25 +441,10 @@ function addon:options()
                                 step = 0.1,
                                 order = 2
                             },
-                            normalEnemyDistance = T.merge(distanceOption(), {
-                                name = 'Per Normal Enemy',
-                                desc = 'Distance to add per normal enemy on screen near the player character',
-                                order = 3
-                            }),
-                            eliteEnemyDistance = T.merge(distanceOption(), {
-                                name = 'Per Elite Enemy',
-                                desc = 'Distance to add per elite enemy on screen near the player character',
-                                order = 4
-                            }),
-                            raidEnemyDistance = T.merge(distanceOption(), {
-                                name = 'Per Raid Enemy',
-                                desc = 'Distance to add per raid enemy on screen near the player character',
-                                order = 5,
-                            }),
                             bossEnemyDistance = T.merge(distanceOption(), {
                                 name = 'Per Boss Enemy',
                                 desc = 'Distance to add per boss enemy on screen near the player character',
-                                order = 6
+                                order = 3
                             })
                         }
                     },
