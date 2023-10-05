@@ -34,7 +34,7 @@ local function logFrameCamPosWorldZoom(x, y, z)
     return ((math.log(math.sqrt((x*x) + (y*y) + (z*z)) - 0.2)/math.log(10)) * 4) + 5.5
 end
 
-local function linearFrameCamPosMagToWorldZoom(x, y, z)
+local function linearFrameCamPosToWorldZoom(x, y, z)
     return math.sqrt((x*x) + (y*y) + (z*z)) * 1.7 + 0.5
 end
 
@@ -169,7 +169,7 @@ function addon:autoZoom()
     local prevTargetZoom = targetZoom
     
     -- use best-fit curve function to estimate zoom distance based on model frame default camera position
-    targetZoom = linearFrameCamPosMagToWorldZoom(T.playerModelFrame:GetCameraPosition())
+    targetZoom = linearFrameCamPosToWorldZoom(T.playerModelFrame:GetCameraPosition())
     
     if (
         AuraUtil.FindAuraByName("Running Wild", "player") == nil and
@@ -195,7 +195,7 @@ function addon:autoZoom()
                 targetZoom = targetZoom + settings.general.bossEnemyDistance
             else
                 T.targetModelFrame:SetUnit(unit)
-                local unitDistance = linearFrameCamPosMagToWorldZoom(T.targetModelFrame:GetCameraPosition())
+                local unitDistance = linearFrameCamPosToWorldZoom(T.targetModelFrame:GetCameraPosition())
                 targetZoom = targetZoom + unitDistance
             end
         end
