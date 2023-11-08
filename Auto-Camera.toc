@@ -1,4 +1,4 @@
-## Interface: 100007
+## Interface: 100200
 ## Title: Auto-Camera
 ## Notes: Dynamically zooms the camera in and out based on your character's surroundings
 ## Author: Pockets
