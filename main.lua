@@ -1,6 +1,8 @@
 local addonName, T = ...
 AutoCamera = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceTimer-3.0")
 local addon = AutoCamera
+local baseZoomDistance = 0.5
+local modelZoomMultiplier = 1.7
 local STAND_BY = false
 local IN_PET_BATTLE = false
 local IN_ENCOUNTER = false
@@ -8,6 +10,7 @@ local IN_BARBER_SHOP = false
 local IN_RAID = false
 local IN_DUNGEON = false
 local STAND_BY_BEHAVIOR_HANDLED = true
+local cameraZoomInKey1, cameraZoomInKey2, cameraZoomOutKey1, cameraZoomOutKey2
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
 local previousSettings = {general = nil, actionCam = nil, actionCamGroups = {}} -- stores the previous settings when defaults are applied by the user
@@ -35,18 +38,19 @@ local function logFrameCamPosWorldZoom(x, y, z)
 end
 
 local function linearFrameCamPosToWorldZoom(x, y, z)
-    return math.sqrt((x*x) + (y*y) + (z*z)) * 1.7 + 0.5
+    return math.sqrt((x*x) + (y*y) + (z*z)) * modelZoomMultiplier + baseZoomDistance
 end
 
 local settings = T.defaultSettings()
 local units = {}
-units[1] = 'target'
+units[1] = {name = 'target', distance = 0}
 for i = 1, 10 do
-    units[i + 1] = 'nameplate' .. i
+    units[i + 1] = {name = 'nameplate' .. i, distance = 0}
 end
 
 BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
-BINDING_NAME_TOGGLE_STAND_BY = "Toggle Stand-By Mode"
+BINDING_NAME_TOGGLE_STAND_BY = "Toggle Auto-Zoom"
+-- BINDING_NAME_ENTER_STAND_BY = "Pause Auto-Zoom"
 
 function addon:OnEnable()
     self:ScheduleRepeatingTimer("autoZoom", 0.1)
@@ -169,7 +173,11 @@ function addon:autoZoom()
     local prevTargetZoom = targetZoom
     
     -- use best-fit curve function to estimate zoom distance based on model frame default camera position
-    targetZoom = linearFrameCamPosToWorldZoom(T.playerModelFrame:GetCameraPosition())
+    local x, y, z = T.playerModelFrame:GetCameraPosition()
+
+    if (x + y + z == 0) then targetZoom = 10
+    else targetZoom = linearFrameCamPosToWorldZoom(x, y, z)
+    end
     
     if (
         AuraUtil.FindAuraByName("Running Wild", "player") == nil and
@@ -181,25 +189,32 @@ function addon:autoZoom()
 
     targetZoom = targetZoom + currentSpeed * settings.general.speedMultiplier
 
-    for i, unit in ipairs(units) do
-        local unitClassification = UnitClassification(unit)
-        local unitLevel = UnitLevel(unit)
+    for _, unit in pairs(units) do
+        local unitClassification = UnitClassification(unit.name)
+        local unitLevel = UnitLevel(unit.name)
         
         if (
-            not UnitIsDead(unit) and
-            UnitCanAttack("player", unit) and
-            CheckInteractDistance(unit, 1) and
-            (unit == 'target' or UnitGUID('target') ~= UnitGUID(unit)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
+            not UnitIsDead(unit.name) and
+            UnitCanAttack("player", unit.name) and
+            CheckInteractDistance(unit.name, 1) and
+            (unit.name == 'target' or UnitGUID('target') ~= UnitGUID(unit.name)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
         ) then
             if (unitClassification == "worldboss") then
-                targetZoom = targetZoom + settings.general.bossEnemyDistance
+                unit.distance = settings.general.bossEnemyDistance
             else
-                T.targetModelFrame:SetUnit(unit)
-                local unitDistance = linearFrameCamPosToWorldZoom(T.targetModelFrame:GetCameraPosition())
-                targetZoom = targetZoom + unitDistance
+                T.targetModelFrame:SetUnit(unit.name)
+                unit.distance = linearFrameCamPosToWorldZoom(T.targetModelFrame:GetCameraPosition())
             end
+        else
+            unit.distance = 0
         end
     end
+
+    table.sort(units, function(a, b)
+        return a.distance > b.distance
+    end)
+
+    targetZoom = targetZoom + units[1].distance
 
     local distanceDiff = targetZoom - currentCameraZoom
     
@@ -773,6 +788,37 @@ function addon:options()
     return options
 end
 
+-- -- data
+-- local data = {
+--     x = '',
+--     z = '',
+--     y = '',
+--     mag = '',
+--     xyz = '',
+-- }
+
+-- local position = -600
+
+-- for name, _ in pairs(data) do
+--     local box = CreateFrame("ScrollFrame", nil, 
+--     UIParent, "InputScrollFrameTemplate")
+--     data[name] = box
+--     box:SetSize(280,300)
+--     box:SetPoint("CENTER", UIParent, "CENTER", position, 0)
+--     box.EditBox:SetFontObject("ChatFontNormal")
+--     box.EditBox:SetMaxLetters(999999999)
+--     box.EditBox:SetAutoFocus(false)
+--     box.EditBox:SetWidth(200);
+--     box.CharCount:Hide()
+--     box.EditBox:SetScript("OnEscapePressed", function()
+--         for name, box in pairs(data) do
+--             box:Hide()
+--         end
+--     end)
+--     box:Hide()
+--     position = position + 300
+-- end
+
 -- commands
 local yellow = "cffffff00"
 local colorStart = "\124"
@@ -788,6 +834,27 @@ SlashCmdList["AC"] = function(arg)
     elseif (arg == "settings" or arg == "options") then
         SettingsPanel:Open()
         InterfaceOptionsFrame_OpenToCategory("Auto-Camera")
+    elseif (arg == "debug") then
+        -- local x, y, z = T.targetModelFrame:GetCameraPosition()
+        local x, y, z = T.targetModelFrame:GetCameraPosition()
+        print("target class", UnitClassification("target"))
+        print("target pos", x,y,z)
+        local x, y, z = T.playerModelFrame:GetCameraPosition()
+        print("player pos", x,y,z)
+
+        -- local data2d = {x = x, z = z, y = y, mag = mag}
+
+        -- for name, box in pairs(data) do
+        --     box:Show()
+        --     local text = box.EditBox:GetText()
+        --     print(strlen(text) ~= 0)
+        --     if (strlen(text) ~= 0) then text = text .. ',' end
+        --     if (name == 'xyz') then
+        --         box.EditBox:SetText(text .. "(" .. x .. ", " .. y .. ", " .. z .. ", " .. cameraZoom .. ")")
+        --     else
+        --         box.EditBox:SetText(text .. "(" .. data2d[name] .. ", " .. cameraZoom .. ")")
+        --     end
+        -- end
     else
         print(colorStart .. yellow .. "Auto-Camera console commands:" .. colorEnd)
         print("/ac toggle       " .. colorStart .. yellow .. "toggles stand-by mode on/off" .. colorEnd)
@@ -807,6 +874,11 @@ function addon:VARIABLES_LOADED()
     if (addon:cameraCharacterCenteringDisabled()) then
         addon:applyActionCamSettings()
     end
+
+    -- cameraZoomInKey1, cameraZoomInKey2 = GetBindingKey("CAMERAZOOMIN")
+    -- cameraZoomOutKey1, cameraZoomOutKey2 = GetBindingKey("CAMERAZOOMOUT")
+    -- cameraZoomKeys = T.set {cameraZoomInKey1, cameraZoomInKey2, cameraZoomOutKey1, cameraZoomOutKey2}
+    -- SetBinding(key, "PAUSE_AUTO_ZOOM")
 end
 
 function addon:PET_BATTLE_OPENING_START()
@@ -858,6 +930,7 @@ function addon:ADDON_LOADED()
     T.playerModelFrame = CreateFrame("PlayerModel", nil, UIParent)
     T.targetModelFrame = CreateFrame("PlayerModel", nil, UIParent)
 
+    -- todo> playerModelFrame:RefreshUnit() -- https://www.wowinterface.com/forums/showthread.php?t=48394
     T.playerModelFrame:SetUnit("player")
     T.playerModelFrame:SetScript("OnEvent", function(self)
         self:SetUnit("player")

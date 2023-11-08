@@ -1,8 +1,9 @@
 <Bindings>
- 	<Binding name="TOGGLE_STAND_BY" runOnUp="true" header="AUTO_CAMERA" category="ADDONS">
- 		if keystate == "down" then
- 			AutoCamera:toggleStandBy()
- 		end
+ 	<Binding name="TOGGLE_STAND_BY" header="AUTO_CAMERA" category="ADDONS">
+		AutoCamera:toggleStandBy()
  	</Binding>
+ 	<!-- <Binding name="PAUSE_AUTO_ZOOM" category="ADDONS">
+		AutoCamera:enterStandBy()
+ 	</Binding> -->
 </Bindings>
  
