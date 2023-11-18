@@ -215,7 +215,7 @@ function addon:autoZoom()
         if (
             not UnitIsDead(unit) and
             UnitCanAttack("player", unit) and
-            CheckInteractDistance(unit, 1) and
+            -- CheckInteractDistance(unit, 1) and -- todo> replace this since it no longer works in combat
             (unit == 'target' or UnitGUID('target') ~= UnitGUID(unit)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
         ) then
             enemyPackDistance = enemyPackDistance + settings.general[enemyArgKey(unit)]
