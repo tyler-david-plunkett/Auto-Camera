@@ -28,6 +28,16 @@ local xpacs = {
     boa = 8,
     sl = 9
 }
+local unitClassificationMaxDistance = {
+    trivial = {
+        min = 0,
+        max = 5
+    },
+    minus = {
+        min = 0,
+        max = 2
+    }
+}
 
 local function logFrameCamPosZToWorldZoom(z)
     return ((math.log(z - 0.2)/math.log(10)) * 4) + 5.5
@@ -191,6 +201,7 @@ function addon:autoZoom()
 
     for _, unit in pairs(units) do
         local unitClassification = UnitClassification(unit.name)
+        local unitClassificationDistanceRange = unitClassificationMaxDistance[unitClassification]
         local unitLevel = UnitLevel(unit.name)
         
         if (
@@ -204,6 +215,16 @@ function addon:autoZoom()
             else
                 T.targetModelFrame:SetUnit(unit.name)
                 unit.distance = linearFrameCamPosToWorldZoom(T.targetModelFrame:GetCameraPosition())
+
+                -- clamp distance to unit classification range
+                if (unitClassificationDistanceRange ~= nil) then
+                    if (unitClassificationDistanceRange.min > unit.distance) then
+                        unit.distance = unitClassificationDistanceRange.min
+                    end
+                    if (unitClassificationDistanceRange.max < unit.distance) then
+                        unit.distance = unitClassificationDistanceRange.max
+                    end
+                end
             end
         else
             unit.distance = 0
