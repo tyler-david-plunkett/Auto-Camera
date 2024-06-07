@@ -51,6 +51,18 @@ local function linearFrameCamPosToWorldZoom(x, y, z)
     return math.sqrt((x*x) + (y*y) + (z*z)) * modelZoomMultiplier + baseZoomDistance
 end
 
+-- uses the player model frame displaying the current player model to create a default zoom distance
+-- todo> investigate ZMobDB which provides model dimensions https://www.wowinterface.com/forums/showthread.php?t=34898
+local function getCharacterZoomDefault()
+    -- use best-fit curve function to estimate zoom distance based on model frame default camera position
+    local distance = linearFrameCamPosToWorldZoom(T.playerModelFrame:GetCameraPosition())
+
+    -- if frame camera distance is 0
+    if (distance == baseZoomDistance) then distance = distance + 10 end
+
+    return distance
+end
+
 local settings = T.defaultSettings()
 local units = {}
 units[1] = {name = 'target', distance = 0}
@@ -182,12 +194,7 @@ function addon:autoZoom()
 
     local prevTargetZoom = targetZoom
     
-    -- use best-fit curve function to estimate zoom distance based on model frame default camera position
-    local x, y, z = T.playerModelFrame:GetCameraPosition()
-
-    if (x + y + z == 0) then targetZoom = 10
-    else targetZoom = linearFrameCamPosToWorldZoom(x, y, z)
-    end
+    targetZoom = settings.general.adjustments[T.playerModelFrame:GetModelFileID()] or getCharacterZoomDefault()
     
     if (
         AuraUtil.FindAuraByName("Running Wild", "player") == nil and
