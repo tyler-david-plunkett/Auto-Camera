@@ -491,6 +491,45 @@ function addon:options()
                             })
                         }
                     },
+                    adjustments = {
+                        type = "group",
+                        inline = true,
+                        order = 4,
+                        name = "Adjustments",
+                        args = {
+                            character = {
+                                type = "group",
+                                name = "Character",
+                                args = {
+                                    distance = T.merge(distanceOption(), {
+                                        name = "Distance",
+                                        desc = "The zoom distance that should be used for the current character model.",
+                                        width = "double",
+                                        get = function()
+                                            return settings.general.adjustments[T.playerModelFrame:GetModelFileID()] or getCharacterZoomDefault()
+                                        end,
+                                        set = function(info, value)
+                                            if (value == getCharacterZoomDefault()) then
+                                                -- todo> test this case
+                                                settings.general.adjustments[T.playerModelFrame:GetModelFileID()] = nil
+                                            else
+                                                settings.general.adjustments[T.playerModelFrame:GetModelFileID()] = value
+                                            end
+                                        end,
+                                        order = 1
+                                    }),
+                                    toggle = {
+                                        type = "execute",
+                                        name = "Default",
+                                        func = function() settings.general.adjustments[T.playerModelFrame:GetModelFileID()] = nil end,
+                                        order = 2
+                                    }
+                                }
+                            }
+                            -- todo: overrideTargetModel = {}
+                            -- todo: overrideMountModel = {}
+                        }
+                    },
                     toggleDefaults = {
                         type = "execute",
                         name = function()
