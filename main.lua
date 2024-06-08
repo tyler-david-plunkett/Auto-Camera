@@ -1009,6 +1009,10 @@ function addon:ADDON_LOADED()
     end
 end
 
+function addon:UNIT_MODEL_CHANGED()
+    LibStub("AceConfigRegistry-3.0"):NotifyChange("Auto-Camera")
+end
+
 local f = CreateFrame("Frame")
 
 local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD", "VARIABLES_LOADED", "ADDON_LOADED"}
@@ -1017,6 +1021,8 @@ local wrathEvents = T.set {"BARBER_SHOP_OPEN", "BARBER_SHOP_CLOSE"}
 for event in pairs(classicEvents) do
     f:RegisterEvent(event)
 end
+
+f:RegisterUnitEvent("UNIT_MODEL_CHANGED", "player")
 
 if (xpac >= xpacs.wolc) then
     for event in pairs(wrathEvents) do
