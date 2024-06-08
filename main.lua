@@ -214,7 +214,8 @@ function addon:autoZoom()
         if (
             not UnitIsDead(unit.name) and
             UnitCanAttack("player", unit.name) and
-            -- CheckInteractDistance(unit.name, 1) and -- todo replace since this no longer works in combat
+            -- /run print(CheckInteractDistance(unit.name, 4)) -- todo test in combat
+            (InCombatLockdown() or CheckInteractDistance(unit.name, 1)) and
             (unit.name == 'target' or UnitGUID('target') ~= UnitGUID(unit.name)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
         ) then
             if (unitClassification == "worldboss") then
