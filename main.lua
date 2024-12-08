@@ -55,7 +55,9 @@ end
 -- todo> investigate ZMobDB which provides model dimensions https://www.wowinterface.com/forums/showthread.php?t=34898
 local function getCharacterZoomDefault()
     -- use best-fit curve function to estimate zoom distance based on model frame default camera position
+    T.playerModelFrame:Show()
     local distance = linearFrameCamPosToWorldZoom(T.playerModelFrame:GetCameraPosition())
+    T.playerModelFrame:Hide()
 
     -- if frame camera distance is 0
     if (distance == baseZoomDistance) then distance = distance + 10 end
@@ -214,15 +216,16 @@ function addon:autoZoom()
         if (
             not UnitIsDead(unit.name) and
             UnitCanAttack("player", unit.name) and
-            -- /run print(CheckInteractDistance(unit.name, 4)) -- todo test in combat
             (InCombatLockdown() or CheckInteractDistance(unit.name, 1)) and
             (unit.name == 'target' or UnitGUID('target') ~= UnitGUID(unit.name)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
         ) then
             if (unitClassification == "worldboss") then
                 unit.distance = settings.general.bossEnemyDistance
             else
-                T.targetModelFrame:SetUnit(unit.name)
-                unit.distance = linearFrameCamPosToWorldZoom(T.targetModelFrame:GetCameraPosition())
+                unit.frame:Show()
+                unit.frame:SetUnit(unit.name)
+                unit.distance = linearFrameCamPosToWorldZoom(unit.frame:GetCameraPosition())
+                unit.frame:Hide()
 
                 -- clamp distance to unit classification range
                 if (unitClassificationDistanceRange ~= nil) then
@@ -904,7 +907,7 @@ SlashCmdList["AC"] = function(arg)
         InterfaceOptionsFrame_OpenToCategory("Auto-Camera")
     elseif (arg == "debug") then
         -- local x, y, z = T.targetModelFrame:GetCameraPosition()
-        local x, y, z = T.targetModelFrame:GetCameraPosition()
+        -- local x, y, z = T.targetModelFrame:GetCameraPosition()
         print("target class", UnitClassification("target"))
         print("target pos", x,y,z)
         local x, y, z = T.playerModelFrame:GetCameraPosition()
@@ -996,7 +999,12 @@ end
 
 function addon:ADDON_LOADED()
     T.playerModelFrame = CreateFrame("PlayerModel", nil, UIParent)
-    T.targetModelFrame = CreateFrame("PlayerModel", nil, UIParent)
+    T.playerModelFrame:Hide()
+
+    for _, unit in pairs(units) do
+        unit.frame = CreateFrame("PlayerModel", nil, UIParent)
+        unit.frame:Hide()
+    end
 
     -- todo> playerModelFrame:RefreshUnit() -- https://www.wowinterface.com/forums/showthread.php?t=48394
     T.playerModelFrame:SetUnit("player")
