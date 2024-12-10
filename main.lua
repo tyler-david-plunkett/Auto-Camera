@@ -999,6 +999,7 @@ end
 
 function addon:ADDON_LOADED()
     T.playerModelFrame = CreateFrame("PlayerModel", nil, UIParent)
+    T.playerModelFrame:SetUnit("player")
     T.playerModelFrame:Hide()
 
     for _, unit in pairs(units) do
@@ -1007,9 +1008,10 @@ function addon:ADDON_LOADED()
     end
 
     -- todo> playerModelFrame:RefreshUnit() -- https://www.wowinterface.com/forums/showthread.php?t=48394
-    T.playerModelFrame:SetUnit("player")
     T.playerModelFrame:SetScript("OnEvent", function(self)
+        self:Show()
         self:SetUnit("player")
+        self:Hide()
     end)
     T.playerModelFrame:RegisterUnitEvent("UNIT_PORTRAIT_UPDATE", "player")
 
