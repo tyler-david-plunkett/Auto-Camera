@@ -155,6 +155,19 @@ function addon:exitStandBy()
     end
 end
 
+function getAdjustment(frame) 
+    frame:Show()
+    local adjustment = settings.general.adjustments[frame:GetModelFileID()]
+    frame:Hide()
+    return adjustment
+end
+
+function setAdjustment(frame, adjustment) 
+    frame:Show()
+    settings.general.adjustments[frame:GetModelFileID()] = adjustment
+    frame:Hide()
+end
+
 function addon:autoZoom()
     if (not addon:isRunning()) then
         if (not STAND_BY_BEHAVIOR_HANDLED) then
@@ -196,7 +209,7 @@ function addon:autoZoom()
 
     local prevTargetZoom = targetZoom
     
-    targetZoom = settings.general.adjustments[T.playerModelFrame:GetModelFileID()] or getCharacterZoomDefault()
+    targetZoom = getAdjustment(T.playerModelFrame) or getCharacterZoomDefault()
     
     if (
         AuraUtil.FindAuraByName("Running Wild", "player") == nil and
@@ -510,14 +523,14 @@ function addon:options()
                                         desc = "The zoom distance that should be used for the current character model.",
                                         width = "double",
                                         get = function()
-                                            return settings.general.adjustments[T.playerModelFrame:GetModelFileID()] or getCharacterZoomDefault()
+                                            return getAdjustment(T.playerModelFrame) or getCharacterZoomDefault()
                                         end,
                                         set = function(info, value)
                                             if (value == getCharacterZoomDefault()) then
                                                 -- todo> test this case
-                                                settings.general.adjustments[T.playerModelFrame:GetModelFileID()] = nil
+                                                setAdjustment(T.playerModelFrame, nil)
                                             else
-                                                settings.general.adjustments[T.playerModelFrame:GetModelFileID()] = value
+                                                setAdjustment(T.playerModelFrame, value)
                                             end
                                         end,
                                         order = 1
