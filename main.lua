@@ -1,6 +1,8 @@
 local addonName, T = ...
 AutoCamera = LibStub("AceAddon-3.0"):NewAddon(addonName, "AceTimer-3.0")
 local addon = AutoCamera
+local baseZoomDistance = 0.5
+local modelZoomMultiplier = 1.7
 local STAND_BY = false
 local IN_PET_BATTLE = false
 local IN_ENCOUNTER = false
@@ -8,16 +10,11 @@ local IN_BARBER_SHOP = false
 local IN_RAID = false
 local IN_DUNGEON = false
 local STAND_BY_BEHAVIOR_HANDLED = true
+local cameraZoomInKey1, cameraZoomInKey2, cameraZoomOutKey1, cameraZoomOutKey2
 local previousCameraZoom = GetCameraZoom()
 local deltaTime = 0.1
 local previousSettings = {general = nil, actionCam = nil, actionCamGroups = {}} -- stores the previous settings when defaults are applied by the user
 local playerRace = UnitRace("player")
-local showOtherRaces = false
-local races = T.set {"Human", "Dwarf", "Night Elf", "Gnome", "Draenei", "Worgen", "Pandaren", "Orc", "Undead", "Tauren", "Troll", "Blood Elf", "Goblin", "Void Elf", "Lightforged Draenei", "Dark Iron Dwarf", "Kul Tiran", "Mechagnome", "Nightborne", "Highmountain Tauren", "Mag'har Orc", "Zandalari Troll", "Vulpera", "Dracthyr"}
-local bodyType = {neutral=1, masc=2, fem=3}
-local humanShapeShifters = T.set {"Human 2", "Human 1", "Visage 2"}
-local bloodElfShapeShifters = T.set {"Visage 1"}
-races[playerRace] = true -- adds player race if it's missing from race set
 local maxZoomDistance = 50
 local xpac = tonumber(string.match(GetBuildInfo(), "([0-9]+)\..*"))
 local xpacs = {
@@ -31,38 +28,53 @@ local xpacs = {
     boa = 8,
     sl = 9
 }
+local unitClassificationMaxDistance = {
+    trivial = {
+        min = 0,
+        max = 5
+    },
+    minus = {
+        min = 0,
+        max = 2
+    }
+}
 
-local function enemyArgKey(unit)
-    local enemyType
-	if (
-		(unitClassification == "worldboss" or
-		(unitClassification == "elite" and UnitLevel(unit) == -1))
-	) then
-        enemyType = "boss"
-    elseif (IN_RAID or IN_DUNGEON) then
-        enemyType = "raid"
-	elseif (
-		unitClassification == "elite"
-	) then
-		enemyType = "elite"
-	else
-		enemyType = "normal"
-    end
-    
-    return enemyType .. "EnemyDistance"
+local function logFrameCamPosZToWorldZoom(z)
+    return ((math.log(z - 0.2)/math.log(10)) * 4) + 5.5
 end
 
-local playerStandingArgKey = T.standingArgKey(playerRace)
+local function logFrameCamPosWorldZoom(x, y, z)
+    return ((math.log(math.sqrt((x*x) + (y*y) + (z*z)) - 0.2)/math.log(10)) * 4) + 5.5
+end
+
+local function linearFrameCamPosToWorldZoom(x, y, z)
+    return math.sqrt((x*x) + (y*y) + (z*z)) * modelZoomMultiplier + baseZoomDistance
+end
+
+-- uses the player model frame displaying the current player model to create a default zoom distance
+-- todo> investigate ZMobDB which provides model dimensions https://www.wowinterface.com/forums/showthread.php?t=34898
+local function getCharacterZoomDefault()
+    -- use best-fit curve function to estimate zoom distance based on model frame default camera position
+    T.playerModelFrame:Show()
+    local distance = linearFrameCamPosToWorldZoom(T.playerModelFrame:GetCameraPosition())
+    T.playerModelFrame:Hide()
+
+    -- if frame camera distance is 0
+    if (distance == baseZoomDistance) then distance = distance + 10 end
+
+    return distance
+end
 
 local settings = T.defaultSettings()
 local units = {}
-units[1] = 'target'
+units[1] = {name = 'target', distance = 0}
 for i = 1, 10 do
-    units[i + 1] = 'nameplate' .. i
+    units[i + 1] = {name = 'nameplate' .. i, distance = 0}
 end
 
 BINDING_HEADER_AUTO_CAMERA = "Auto-Camera"
-BINDING_NAME_TOGGLE_STAND_BY = "Toggle Stand-By Mode"
+BINDING_NAME_TOGGLE_STAND_BY = "Toggle Auto-Zoom"
+-- BINDING_NAME_ENTER_STAND_BY = "Pause Auto-Zoom"
 
 function addon:OnEnable()
     self:ScheduleRepeatingTimer("autoZoom", 0.1)
@@ -119,10 +131,6 @@ function addon:OnInitialize()
     if (settings.actionCam.suppressExperimentalCVarPrompt) then
         UIParent:UnregisterEvent("EXPERIMENTAL_CVAR_CONFIRMATION_NEEDED")
     end
-
-    if (not STAND_BY) then
-        addon:autoZoom()
-    end
 end
 
 -- helper functions
@@ -145,6 +153,19 @@ function addon:exitStandBy()
     if addon:isRunning() then
         addon:autoZoom()
     end
+end
+
+function getAdjustment(frame) 
+    frame:Show()
+    local adjustment = settings.general.adjustments[frame:GetModelFileID()]
+    frame:Hide()
+    return adjustment
+end
+
+function setAdjustment(frame, adjustment) 
+    frame:Show()
+    settings.general.adjustments[frame:GetModelFileID()] = adjustment
+    frame:Hide()
 end
 
 function addon:autoZoom()
@@ -186,17 +207,9 @@ function addon:autoZoom()
 
     STAND_BY_BEHAVIOR_HANDLED = false
 
-    targetZoom = settings.general[playerStandingArgKey]
-
-    -- Worgen and Drakthyr Human override
-    if (humanShapeShifters[getPlayerModelName()] ~= nil) then
-        targetZoom = settings.humanDistance
-    end
-
-    -- Drakthyr Blood Elf override
-    if (bloodElfShapeShifters[getPlayerModelName()] ~= nil) then
-        targetZoom = settings.humanDistance
-    end
+    local prevTargetZoom = targetZoom
+    
+    targetZoom = getAdjustment(T.playerModelFrame) or getCharacterZoomDefault()
     
     if (
         AuraUtil.FindAuraByName("Running Wild", "player") == nil and
@@ -208,21 +221,45 @@ function addon:autoZoom()
 
     targetZoom = targetZoom + currentSpeed * settings.general.speedMultiplier
 
-    local enemyPackDistance = targetZoom
-    for i, unit in ipairs(units) do
-        local unitClassification = UnitClassification(unit)
-        local unitLevel = UnitLevel(unit)
+    for _, unit in pairs(units) do
+        local unitClassification = UnitClassification(unit.name)
+        local unitClassificationDistanceRange = unitClassificationMaxDistance[unitClassification]
+        local unitLevel = UnitLevel(unit.name)
+        
         if (
-            not UnitIsDead(unit) and
-            UnitCanAttack("player", unit) and
-            -- CheckInteractDistance(unit, 1) and -- todo> replace this since it no longer works in combat
-            (unit == 'target' or UnitGUID('target') ~= UnitGUID(unit)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
+            not UnitIsDead(unit.name) and
+            UnitCanAttack("player", unit.name) and
+            (InCombatLockdown() or CheckInteractDistance(unit.name, 1)) and
+            (unit.name == 'target' or UnitGUID('target') ~= UnitGUID(unit.name)) -- if unit is target or a unit with nameplate that isn't the target (avoids counting target twice)
         ) then
-            enemyPackDistance = enemyPackDistance + settings.general[enemyArgKey(unit)]
+            if (unitClassification == "worldboss") then
+                unit.distance = settings.general.bossEnemyDistance
+            else
+                unit.frame:Show()
+                unit.frame:SetUnit(unit.name)
+                unit.distance = linearFrameCamPosToWorldZoom(unit.frame:GetCameraPosition())
+                unit.frame:Hide()
+
+                -- clamp distance to unit classification range
+                if (unitClassificationDistanceRange ~= nil) then
+                    if (unitClassificationDistanceRange.min > unit.distance) then
+                        unit.distance = unitClassificationDistanceRange.min
+                    end
+                    if (unitClassificationDistanceRange.max < unit.distance) then
+                        unit.distance = unitClassificationDistanceRange.max
+                    end
+                end
+            end
+        else
+            unit.distance = 0
         end
     end
 
-    if (targetZoom < enemyPackDistance) then targetZoom = enemyPackDistance end
+    table.sort(units, function(a, b)
+        return a.distance > b.distance
+    end)
+
+    targetZoom = targetZoom + units[1].distance
 
     local distanceDiff = targetZoom - currentCameraZoom
     
@@ -444,26 +481,6 @@ function addon:options()
                             })
                         }
                     },
-                    standingDistances = {
-                        type = "group",
-                        inline = true,
-                        order = 2,
-                        name = "Minimum Camera Distances by Race",
-                        args = {
-                            toggleHidden = {
-                                type = "execute",
-                                name = function()
-                                    if showOtherRaces then
-                                        return "Show Fewer Races"
-                                    else
-                                        return "Show More Races"
-                                    end
-                                end,
-                                func = function() showOtherRaces = not showOtherRaces end,
-                                order = 99
-                            }
-                        }
-                    },
                     contextualDistances = {
                         type = "group",
                         inline = true,
@@ -484,26 +501,50 @@ function addon:options()
                                 step = 0.1,
                                 order = 2
                             },
-                            normalEnemyDistance = T.merge(distanceOption(), {
-                                name = 'Per Normal Enemy',
-                                desc = 'Distance to add per normal enemy on screen near the player character',
-                                order = 3
-                            }),
-                            eliteEnemyDistance = T.merge(distanceOption(), {
-                                name = 'Per Elite Enemy',
-                                desc = 'Distance to add per elite enemy on screen near the player character',
-                                order = 4
-                            }),
-                            raidEnemyDistance = T.merge(distanceOption(), {
-                                name = 'Per Raid Enemy',
-                                desc = 'Distance to add per raid enemy on screen near the player character',
-                                order = 5,
-                            }),
                             bossEnemyDistance = T.merge(distanceOption(), {
                                 name = 'Per Boss Enemy',
                                 desc = 'Distance to add per boss enemy on screen near the player character',
-                                order = 6
+                                order = 3
                             })
+                        }
+                    },
+                    adjustments = {
+                        type = "group",
+                        inline = true,
+                        order = 4,
+                        name = "Adjustments",
+                        args = {
+                            character = {
+                                type = "group",
+                                name = "Character",
+                                args = {
+                                    distance = T.merge(distanceOption(), {
+                                        name = "Distance",
+                                        desc = "The zoom distance that should be used for the current character model.",
+                                        width = "double",
+                                        get = function()
+                                            return getAdjustment(T.playerModelFrame) or getCharacterZoomDefault()
+                                        end,
+                                        set = function(info, value)
+                                            if (value == getCharacterZoomDefault()) then
+                                                -- todo> test this case
+                                                setAdjustment(T.playerModelFrame, nil)
+                                            else
+                                                setAdjustment(T.playerModelFrame, value)
+                                            end
+                                        end,
+                                        order = 1
+                                    }),
+                                    toggle = {
+                                        type = "execute",
+                                        name = "Default",
+                                        func = function() settings.general.adjustments[T.playerModelFrame:GetModelFileID()] = nil end,
+                                        order = 2
+                                    }
+                                }
+                            }
+                            -- todo: overrideTargetModel = {}
+                            -- todo: overrideMountModel = {}
                         }
                     },
                     toggleDefaults = {
@@ -823,41 +864,6 @@ function addon:options()
         )
     end
 
-    -- standing distances
-    local standingDistances = options.args.general.args.standingDistances
-    for race in pairs(races) do
-        standingDistances.args[T.standingArgKey(race)] = T.merge(distanceOption(), {
-            name = race,
-            hidden = function()
-                -- show all when Show Other Races is selected
-                if (showOtherRaces) then return false end
-
-                -- show current race
-                if (playerRace == race) then return false end
-
-                -- show Human if player is Worgen or Femanin Dracthry
-                if (race == "Human" and (playerRace == "Worgen" or (playerRace == "Dracthyr" and UnitSex("player") == bodyType.fem))) then return false end
-
-                -- show Blood Elf if player is Masculine Dracthry
-                if (race == "Blood Elf" and (playerRace == "Dracthyr" and UnitSex("player") == bodyType.masc)) then return false end
-
-                -- otherwise hide
-                return true
-            end
-        })
-    end
-    local playerStandingArgKey = playerRace:gsub("^.", string.lower):gsub(" ", "") .. 'Distance'
-    standingDistances.args[playerStandingArgKey].order = 1
-
-    -- prioritize alternate forms
-    if (playerRace == "Worgen" or (playerRace == "Dracthyr" and UnitSex("player") == bodyType.fem)) then
-        standingDistances.args.humanDistance.order = 2
-    end
-
-    if (playerRace == "Dracthyr" and UnitSex("player") == bodyType.masc) then
-        standingDistances.args.bloodElfDistance.order = 2
-    end
-
     -- stand by behavior
     if (xpac >= xpacs.sl) then
         options.args.general.args.standBy.args.standByBehavior.values.maxDistance = "Zoom to max distance"
@@ -865,6 +871,37 @@ function addon:options()
 
     return options
 end
+
+-- -- data
+-- local data = {
+--     x = '',
+--     z = '',
+--     y = '',
+--     mag = '',
+--     xyz = '',
+-- }
+
+-- local position = -600
+
+-- for name, _ in pairs(data) do
+--     local box = CreateFrame("ScrollFrame", nil, 
+--     UIParent, "InputScrollFrameTemplate")
+--     data[name] = box
+--     box:SetSize(280,300)
+--     box:SetPoint("CENTER", UIParent, "CENTER", position, 0)
+--     box.EditBox:SetFontObject("ChatFontNormal")
+--     box.EditBox:SetMaxLetters(999999999)
+--     box.EditBox:SetAutoFocus(false)
+--     box.EditBox:SetWidth(200);
+--     box.CharCount:Hide()
+--     box.EditBox:SetScript("OnEscapePressed", function()
+--         for name, box in pairs(data) do
+--             box:Hide()
+--         end
+--     end)
+--     box:Hide()
+--     position = position + 300
+-- end
 
 -- commands
 local yellow = "cffffff00"
@@ -878,9 +915,30 @@ SlashCmdList["AC"] = function(arg)
         addon:enterStandBy()
     elseif (arg == "resume") then
         addon:exitStandBy()
-    elseif (arg == "settings") then
-        InterfaceOptionsFrame_Show()
+    elseif (arg == "settings" or arg == "options") then
+        SettingsPanel:Open()
         InterfaceOptionsFrame_OpenToCategory("Auto-Camera")
+    elseif (arg == "debug") then
+        -- local x, y, z = T.targetModelFrame:GetCameraPosition()
+        -- local x, y, z = T.targetModelFrame:GetCameraPosition()
+        print("target class", UnitClassification("target"))
+        print("target pos", x,y,z)
+        local x, y, z = T.playerModelFrame:GetCameraPosition()
+        print("player pos", x,y,z)
+
+        -- local data2d = {x = x, z = z, y = y, mag = mag}
+
+        -- for name, box in pairs(data) do
+        --     box:Show()
+        --     local text = box.EditBox:GetText()
+        --     print(strlen(text) ~= 0)
+        --     if (strlen(text) ~= 0) then text = text .. ',' end
+        --     if (name == 'xyz') then
+        --         box.EditBox:SetText(text .. "(" .. x .. ", " .. y .. ", " .. z .. ", " .. cameraZoom .. ")")
+        --     else
+        --         box.EditBox:SetText(text .. "(" .. data2d[name] .. ", " .. cameraZoom .. ")")
+        --     end
+        -- end
     else
         print(colorStart .. yellow .. "Auto-Camera console commands:" .. colorEnd)
         print("/ac toggle       " .. colorStart .. yellow .. "toggles stand-by mode on/off" .. colorEnd)
@@ -900,6 +958,11 @@ function addon:VARIABLES_LOADED()
     if (addon:cameraCharacterCenteringDisabled()) then
         addon:applyActionCamSettings()
     end
+
+    -- cameraZoomInKey1, cameraZoomInKey2 = GetBindingKey("CAMERAZOOMIN")
+    -- cameraZoomOutKey1, cameraZoomOutKey2 = GetBindingKey("CAMERAZOOMOUT")
+    -- cameraZoomKeys = T.set {cameraZoomInKey1, cameraZoomInKey2, cameraZoomOutKey1, cameraZoomOutKey2}
+    -- SetBinding(key, "PAUSE_AUTO_ZOOM")
 end
 
 function addon:PET_BATTLE_OPENING_START()
@@ -947,14 +1010,43 @@ function addon:BARBER_SHOP_CLOSE()
     end
 end
 
+function addon:ADDON_LOADED()
+    T.playerModelFrame = CreateFrame("PlayerModel", nil, UIParent)
+    T.playerModelFrame:SetUnit("player")
+    T.playerModelFrame:Hide()
+
+    for _, unit in pairs(units) do
+        unit.frame = CreateFrame("PlayerModel", nil, UIParent)
+        unit.frame:Hide()
+    end
+
+    -- todo> playerModelFrame:RefreshUnit() -- https://www.wowinterface.com/forums/showthread.php?t=48394
+    T.playerModelFrame:SetScript("OnEvent", function(self)
+        self:Show()
+        self:SetUnit("player")
+        self:Hide()
+    end)
+    T.playerModelFrame:RegisterUnitEvent("UNIT_PORTRAIT_UPDATE", "player")
+
+    if (not STAND_BY) then
+        addon:autoZoom()
+    end
+end
+
+function addon:UNIT_MODEL_CHANGED()
+    LibStub("AceConfigRegistry-3.0"):NotifyChange("Auto-Camera")
+end
+
 local f = CreateFrame("Frame")
 
-local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD", "VARIABLES_LOADED"}
+local classicEvents = T.set {"PET_BATTLE_OPENING_START", "PET_BATTLE_CLOSE", "ENCOUNTER_START", "ENCOUNTER_END", "PLAYER_ENTERING_WORLD", "VARIABLES_LOADED", "ADDON_LOADED"}
 local wrathEvents = T.set {"BARBER_SHOP_OPEN", "BARBER_SHOP_CLOSE"}
 
 for event in pairs(classicEvents) do
     f:RegisterEvent(event)
 end
+
+f:RegisterUnitEvent("UNIT_MODEL_CHANGED", "player")
 
 if (xpac >= xpacs.wolc) then
     for event in pairs(wrathEvents) do
